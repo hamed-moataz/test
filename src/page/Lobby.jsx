@@ -16,6 +16,7 @@ const Lobby = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const payload = params.get("payload");
+    console.log(payload , 'payload from server')
 
     if (!payload) return;
 
