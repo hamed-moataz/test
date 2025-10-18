@@ -13,19 +13,12 @@ export default function Header() {
             </svg>
           </button>
 
-          <Link to="/lobby" className="flex items-center gap-3 text-[#ebe0e0]">
+          <Link to="/room" className="flex items-center gap-3 text-[#ebe0e0]">
             <img src={logo} alt="logo" className="h-18 w-auto" />
             {/* <span className="hidden sm:inline text-3xl font-semibold">Route</span> */}
           </Link>
         </div>
 
-        <div className="flex items-center gap-6">
-      
-
-          <Link to="/lobby" className="bg-[var(--color-secondary)] px-4 py-2 rounded-md text-sm font-medium text-white hover:opacity-95 transition">
-            Create Room
-          </Link>
-        </div>
       </div>
     </header>
   );

@@ -2,6 +2,6 @@
 
 @theme {
      --color-primary:#1a1a1a;
-     --color-secondary:#845695;
+     --color-secondary:oklch(39.1% 0.09 240.876);
      --color-accent:#718096;
 }

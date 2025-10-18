@@ -41,9 +41,10 @@ export const initRTCClient = (onUserJoined, onUserLeft) => {
 };
 
 // joinRoom
-export const joinRoom = async (channel, uid, token) => {
+export const joinRoom = async (appId,channel, uid, token) => {
+  console.log(appId , 'from appId test two')
   if (!rtcClient) throw new Error("RTC client not initialized");
-  await rtcClient.join(APP_ID, channel, token, uid);
+  await rtcClient.join(appId, channel, token, uid);
   console.log("✅ Joined channel, tracks not published yet");
 };
 

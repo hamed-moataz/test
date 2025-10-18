@@ -16,9 +16,11 @@ import Controls from "../components/Controls";
 import ChatBox from "../components/ChatBox";
 import MembersList from "../components/MembersList";
 import Loading from "../components/Loading";
-import { AppContext } from "../context/AppContext";
+import { useMeet } from "../context/MeetContext";
 
 export default function MeetingRoom() {
+  const { data, authorized, loading } = useMeet();
+  console.log(data , 'data from api')
   const [joined, setJoined] = useState(false);
   const [micActive, setMicActive] = useState(false);
   const [localVideoTrack, setLocalVideoTrack] = useState(null);
@@ -31,16 +33,9 @@ export default function MeetingRoom() {
   const [membersVisible, setMembersVisible] = useState(true);
   const [uid, setUid] = useState(null);
 
-  const searchParams = new URLSearchParams(window.location.search);
-  const roomId = searchParams.get("room") || "main";
 
   const localVideoRef = useRef(null);
   const screenVideoRef = useRef(null);
-  // const { data } = useContext(AppContext);
-  // const roomId = data.work_shop_uuid;
-  // const token = data.token;
-  // const userId = data.user_ids.trainers[0];
-
 
   // user update
   const updateMembers = useCallback(() => {
@@ -49,25 +44,38 @@ export default function MeetingRoom() {
     setMembers(users);
   }, []);
 
+
+
   // join room
-  const handleJoin = useCallback(async () => {
-    const _uid =
-      sessionStorage.getItem("uid") ||
-      String(Math.floor(Math.random() * 10000));
-    sessionStorage.setItem("uid", _uid);
-    setUid(_uid);
+    const handleJoin = useCallback(async () => {
+      const APP_ID = import.meta.env.VITE_AGORA_APP_ID;
+      console.log(APP_ID, 'test app id')
+      const _uid = data?.lecture_uuid;
+      console.log(data , 'from test tow22')
+      const token = data?.token ;
+      const chanel_name = data?.channel_name;
+      
+      
+      // const token = "007eJxTYDjB0BNaZ3+ve4fOlN9H9xbd9NyVtGZjxKn/yZuybSPsxcQUGJISzZIt0oyTjcySLU2MUk0t0wxNU00Sk5KNkkzTDJPTGm0/ZzQEMjL086azMjJAIIjPwpCbmJnHwAAAu7Igpg==";
+      // const chanel_name ="main";
 
-    const token =
-      "007eJxTYOiJf2nFdVDJpTemq6iUeZdtuGKxt9C18lXaNfv+m7tq1CswJCWaJVukGScbmSVbmhilmlqmGZqmmiQmJRslmaYZJqfFsL3LaAhkZGjcNJ2ZkQECQXwWhtzEzDwGBgCwuR3x";
-    await joinRoom(roomId, _uid, token);
+      console.log(token , 'token from api')
+      console.log(chanel_name , 'chanel_name from api')
 
-    setJoined(true);
-    setMessages((m) => [
-      ...m,
-      { system: true, name: "Root Bot", text: "🎉 You joined the room" },
-    ]);
-  }, [roomId]);
+      if (!token || !chanel_name) {
+        console.error("Missing token or channel name from context");
+        return;
+      }
 
+      await joinRoom(APP_ID, chanel_name, _uid, token);
+
+      setJoined(true);
+      setMessages((m) => [
+        ...m,
+        { system: true, name: "Root Bot", text: "🎉 You joined the room" },
+      ]);
+    }, [data]);
+    
   // leave the room
   const handleLeave = useCallback(async () => {
     await leaveRoom();
@@ -148,12 +156,13 @@ export default function MeetingRoom() {
     };
   }, [screenActive]);
   if (!uid) return null;
-
+  if (loading) return <p>Loading...</p>;
+  if (!authorized) return <p>Unauthorized to join this meeting.</p>;
   return (
     <div className="bg-[var(--color-primary)] min-h-screen text-white ">
       <Header />
       {!joined ? (
-        <Loading handleJoin={handleJoin}/>
+        <Loading handleJoin={handleJoin} />
       ) : (
         <main
           className={`pt-24 max-w-9/10 mx-auto grid h-screen gap-4 transition-all duration-300 justify-center items-center  
@@ -175,7 +184,7 @@ export default function MeetingRoom() {
           <div className="flex flex-col max-h-[70vh] w-full relative mx-auto ">
             <VideoGrid joined={joined}>
               {joined && localVideoTrack && (
-                <div className="video__container w-[300px] h-[300px] bg-black rounded-full overflow-hidden mx-auto">
+                <div className="video__container w-[200px] h-[200px] bg-black rounded-full overflow-hidden mx-auto">
                   <div ref={localVideoRef} className="w-full h-full"></div>
                 </div>
               )}

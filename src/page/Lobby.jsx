@@ -3,8 +3,28 @@ import Header from "../components/Header";
 // import LobbyForm from "../components/LobbyForm";
 import { useLocation } from "react-router-dom";
 import { decrypt } from "n-krypta";
-
+import { useMemo } from 'react';
+import { decryptMeetToken } from './crypto-utils';
 const Lobby = () => {
+
+
+   const params = new URLSearchParams(window.location.search);
+  const t = params.get('payload');
+  console.log(t , 'from lobby')
+
+  const data = useMemo(() => {
+    if (!t) return null;
+    try {
+      return decryptMeetToken(t);
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
+  }, [t]);
+  console.log(data , 'from api')
+
+  if (!t) return <div>Missing token.</div>;
+  if (!data) return <div>Invalid or expired token.</div>;
   const key = import.meta.env.VITE_APP_KEY;
 
   const location = useLocation();
@@ -12,6 +32,27 @@ const Lobby = () => {
   const [decrypted, setDecrypted] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const test =
+      "eyJpdiI6IlNJVHFoTGZkSlVaekQrNnR1Rk1yS2c9PSIsInZhbHVlIjoiemhtYmVXeTZnNklzVUFPbDBjV0ZtakRQWWZ2anlkTkRwRXhQY2FqcDB2M1NLbGViQzNHcDVyaHVMVmNadU5Mckk4UzBTVVVWT3hneW9WZ3VrNVI1TE9WVExMdHNrcEk0VXdSYmUzdW1iR2E3dEpTcjArUWsrdFd3NkV4MElQQ2RqUHF6WExZcFlEWE5qYWgwNmZWSUw0Z0JzWk9HUXFsT2lNamtzU0dVMnVLZ3JEUTBiUzBBeEpTMHZFdWhjS3Z6dFpYanJ2a0NOS3JBZ2JTTk9TbkUrVFRMMmtBenZGVXdqbDhQVUw5aE01TWJDU2hLNWxoVlMxTEZNY3hYUHp5RlphM2ZEZzg1Tnh1MmRHaklIdVhzRUVBL2pLNUtRUS9PdGZhR21ZTGpwaUE4S1dIN2R4SkhTVTZmKzBMT244b3pLYmxvTHIvaDNaWnN1TThRaHdhRXkzcXpBamlCTlpWc3QwZEZwWjM3MCswPSIsIm1hYyI6IjI2ODU5N2MwODRjZTNkMzhlMDEyYmNkMzlkYTMzMDdhOWI0ZjVhODk1MjRkMWM2ODA5YjA4ZWI2MzE2N2YzZTgiLCJ0YWciOiIifQ==";
+
+    try {
+      const decrypted = decrypt(test, key);
+      console.log("✅ Decrypted text:", decrypted);
+
+      try {
+        // لو البيانات كانت JSON
+        const json = JSON.parse(decrypted);
+        console.log("✅ Parsed JSON:", json);
+      } catch {
+        // لو مجرد نص عادي
+        console.log("📜 Decrypted (plain text):", decrypted);
+      }
+    } catch (err) {
+      console.error("❌ Error decrypting:", err);
+    }
+  }, [key]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
