@@ -1,11 +1,7 @@
 import nacl from 'tweetnacl';
 import { inflateRaw } from 'pako';
 
-/**
- * Provide the SAME 32-byte key you configured on Laravel (decoded from base64).
- * Store it via env var at build time. Example with Vite:
- *   VITE_MEETLINK_SHARED_KEY_B64=3r0T3l3g1bLyUuCbi9bZ3k4+q3oXjv1m3lqQ2gY3q5k=
- */
+
 const b64 = import.meta.env.VITE_MEETLINK_SHARED_KEY_B64;
 if (!b64) throw new Error('VITE_MEETLINK_SHARED_KEY_B64 missing');
 
@@ -55,6 +51,5 @@ export function decryptMeetToken(token){
   const inflated = inflateRaw(opened);
 
   const json = bytesToUtf8(inflated);
-  console.log(json , 'from test')
   return JSON.parse(json);
 }

@@ -14,7 +14,6 @@
     "agora-rtc-sdk-ng": "^4.24.0",
     "agora-rtm-sdk": "^1.5.1-19",
     "crypto-js": "^4.2.0",
-    "n-krypta": "^1.0.6",
     "pako": "^2.1.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

@@ -1,7 +1,7 @@
 import React from "react";
 import { useMeet } from "../context/MeetContext";
 
-const Loading = ({ handleJoin }) => {
+const Loading = ({ handleJoin, isJoining }) => {
   const { authorized, loading, data } = useMeet();
 
   if (loading)
@@ -13,7 +13,7 @@ const Loading = ({ handleJoin }) => {
       </div>
     );
 
-  if (authorized === false)
+  if (authorized === null)
     return (
       <div className="w-full h-screen flex justify-center items-center text-red-700">
         You are not allowed in.
@@ -21,7 +21,11 @@ const Loading = ({ handleJoin }) => {
     );
 
   if (!data)
-    return <div className="text-red-500">❌ Invalid or missing payload.</div>;
+    return (
+      <div className="text-red-500  w-full h-screen flex justify-center items-center">
+        ❌ Invalid or missing payload.
+      </div>
+    );
 
   return (
     <div className="flex flex-col items-center justify-center h-screen w-full text-center text-gray-200">
@@ -52,9 +56,23 @@ const Loading = ({ handleJoin }) => {
 
       <button
         onClick={handleJoin}
-        className="px-8 py-3 bg-[var(--color-secondary)] rounded-md text-white font-semibold shadow-lg transition-all duration-300 hover:scale-105"
+        disabled={loading || isJoining}
+        className={`px-8 py-3 rounded-md text-white font-semibold shadow-lg transition-all duration-300
+          ${
+            isJoining
+              ? "bg-gray-500 cursor-not-allowed"
+              : "bg-[var(--color-secondary)] hover:scale-105"
+          }`}
+        aria-busy={isJoining ? "true" : "false"}
       >
-        Join Stream
+        {isJoining ? (
+          <span className="inline-flex items-center gap-2">
+            <span className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" />
+            Joining...
+          </span>
+        ) : (
+          "Join Stream"
+        )}
       </button>
     </div>
   );

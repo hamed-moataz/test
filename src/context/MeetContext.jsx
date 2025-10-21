@@ -1,5 +1,11 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { decryptMeetToken } from "../page/crypto-utils";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { decryptMeetToken } from "../services/crypto-utils";
 
 const MeetContext = createContext();
 
@@ -22,7 +28,7 @@ export const MeetProvider = ({ children }) => {
       return null;
     }
   }, [t]);
- useEffect(() => {
+  useEffect(() => {
     const verifyPayload = async () => {
       if (!payloadData) {
         setAuthorized(false);
@@ -43,23 +49,15 @@ export const MeetProvider = ({ children }) => {
         }
 
         const workshopData = await res.json();
-        console.log(workshopData , 'from api new')
+        console.log(workshopData, "from api new");
         setWorkshop(workshopData);
 
-const normalize = (v) => v === true || v === "true";
+        const normalize = (v) => v === true || v === "true";
 
-const isValid =
-  normalize(workshopData?.lecture_uuid) &&
-  normalize(workshopData?.user_uuid) &&
-  normalize(workshopData?.is_host);
-
-
-
-// console.log("lecture_uuid:", workshopData?.lecture_uuid, payloadData?.lecture_uuid);
-// console.log("user_uuid:", workshopData?.user_uuid, payloadData?.user_uuid);
-// console.log("is_host:", workshopData?.is_host);
-// console.log("isValid result:", isValid);
-
+        const isValid =
+          normalize(workshopData?.lecture_uuid) &&
+          normalize(workshopData?.user_uuid) &&
+          normalize(workshopData?.is_host);
 
         setAuthorized(isValid);
         setData(payloadData);
