@@ -1,16 +1,21 @@
 import React, { useMemo } from "react";
+import { useMeet } from "../context/MeetContext";
+import { Trash } from "lucide-react";
 
 export default function MembersList({
   members = [],
   isCurrentUserHost = false,
   currentUserId,
-  onMuteRemoteUser,
-  onStopRemoteVideo,
+  // onMuteRemoteUser,
+  // onStopRemoteVideo,
 }) {
   const sortedMembers = useMemo(
-    () => [...members].sort((a, b) => (a.host === b.host ? 0 : a.host ? -1 : 1)),
+    () =>
+      [...members].sort((a, b) => (a.host === b.host ? 0 : a.host ? -1 : 1)),
     [members]
   );
+  const { muteAll, endForAll, muteUser, kickedUser } = useMeet();
+
   return (
     <aside
       id="members__container"
@@ -21,8 +26,34 @@ export default function MembersList({
         className="flex justify-between items-center border-b border-gray-700 pb-2 mb-2"
       >
         <p className="font-medium">Participants</p>
-        <strong id="members__count" className="text-sm">{sortedMembers.length}</strong>
+        <strong id="members__count" className="text-sm">
+          {sortedMembers.length}
+        </strong>
       </div>
+      {isCurrentUserHost && (
+        <div
+          id="host__controls"
+          className="flex items-center gap-2 pb-2 mb-2 border-b border-gray-700"
+        >
+          <button
+            type="button"
+            onClick={muteAll}
+            className="px-2 py-1 rounded-md bg-red-600 text-white text-sm hover:opacity-90"
+            title="Mute all microphones"
+          >
+            Mute All
+          </button>
+
+          <button
+            type="button"
+            onClick={endForAll}
+            className="ml-auto px-2 py-1 rounded-md bg-gray-700 text-white text-sm hover:opacity-90"
+            title="End meeting for everyone"
+          >
+            End Meeting
+          </button>
+        </div>
+      )}
 
       <div
         id="member__list"
@@ -36,9 +67,7 @@ export default function MembersList({
               key={m.id}
               className="member__wrapper flex items-center justify-between gap-3 p-2 rounded-md bg-[#1f1f1f]"
             >
-              <p className="member_name text-sm truncate">
-                {m.name || m.id}
-              </p>
+              <p className="member_name text-sm truncate">{m.name || m.id}</p>
 
               <div className="flex items-center gap-2">
                 <span
@@ -56,27 +85,40 @@ export default function MembersList({
                   <div className="flex gap-1">
                     <button
                       type="button"
-                      onClick={() => onMuteRemoteUser?.(m.id)}
+                      onClick={() => muteUser?.(m.id)}
                       className="p-1 rounded-md bg-[var(--color-accent)] text-white hover:opacity-90"
                       title="Mute guest mic (local)"
                       aria-label={`Mute ${m.name || m.id}`}
                     >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2a2 2 0 0 1 2 2v7a2 2 0 1 1-4 0V4a2 2 0 0 1 2-2zM6 9v2a6 6 0 0 0 12 0V9h2v2a8 8 0 0 1-7 7.938V21h3v2H8v-2h3v-2.062A8 8 0 0 1 4 11V9h2z"/>
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <path d="M12 2a2 2 0 0 1 2 2v7a2 2 0 1 1-4 0V4a2 2 0 0 1 2-2zM6 9v2a6 6 0 0 0 12 0V9h2v2a8 8 0 0 1-7 7.938V21h3v2H8v-2h3v-2.062A8 8 0 0 1 4 11V9h2z" />
                       </svg>
                     </button>
 
-                    <button
+                    {/* <button
                       type="button"
                       onClick={() => onStopRemoteVideo?.(m.id)}
                       className="p-1 rounded-md bg-[var(--color-accent)] text-white hover:opacity-90"
                       title="Stop guest video (local)"
                       aria-label={`Stop video of ${m.name || m.id}`}
                     >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M17 10.5V7a2 2 0 0 0-2-2H3A2 2 0 0 0 1 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3.5l6 4v-11l-6 4z"/>
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <path d="M17 10.5V7a2 2 0 0 0-2-2H3A2 2 0 0 0 1 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3.5l6 4v-11l-6 4z" />
                       </svg>
-                    </button>
+                    </button> */}
+                    <span onClick={() => kickedUser(m.id)}>
+                     <Trash />
+                    </span>
                   </div>
                 )}
               </div>

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useMeet } from "../context/MeetContext";
 
 export default function Controls({
   joined,
@@ -9,7 +10,6 @@ export default function Controls({
   onToggleScreen,
   onToggleChat,
   onToggleMembers,
-  micActive = false,
   camActive = false,
   screenActive = false,
   chatVisible = false,
@@ -18,7 +18,9 @@ export default function Controls({
   micDisabled,
   camDisabled,
   screenDisabled,
+
 }) {
+  const {micActive} = useMeet()
   const [handRaised, setHandRaised] = useState(false);
   const computedMicDisabled = useMemo(
     () => (typeof micDisabled === "boolean" ? micDisabled : !joined),
@@ -33,7 +35,6 @@ export default function Controls({
     [screenDisabled, joined]
   );
 
-  // حارس آمن يمنع الضغط لو الزر متعطل
   const safe = (fn, disabled) => () => {
     if (disabled) return;
     fn?.();

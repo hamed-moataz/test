@@ -15,12 +15,13 @@ import {
   localTracks,
   closeCameraTrack,
   createCameraTrack,
-  muteUserLocally,
-  stopUserVideoLocally,
+  // muteUserLocally,
+  // stopUserVideoLocally,
   subscribeVolume,
   getScreenSharer,
   subscribeScreenShare,
   canStartScreenShare,
+  onRemoteRosterChanged,
 } from "../services/agoraRTCService";
 
 import Header from "../components/Header";
@@ -39,14 +40,12 @@ import {
 } from "../services/agoraRTMService";
 
 export default function MeetingRoom() {
-  const { data, loading } = useMeet();
+  const {data, loading, setMicActive, micActive } = useMeet();
   const baseUrl = import.meta.env.VITE_BASE_URL;
 
   const [joining, setJoining] = useState(false);
   const [joined, setJoined] = useState(false);
-  const [micActive, setMicActive] = useState(false);
   const [localVideoTrack, setLocalVideoTrack] = useState(null);
-
   const [screenActive, setScreenActive] = useState(false);
   const [remoteUsers, setRemoteUsers] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -66,6 +65,7 @@ export default function MeetingRoom() {
     }));
   }, []);
 
+
   const params = new URLSearchParams(window.location.search);
   const t = params.get("payload");
 
@@ -79,10 +79,6 @@ export default function MeetingRoom() {
         )
       : null
   );
-
-  // const updateSpeakingStatus = useCallback((userId, isSpeaking) => {
-  //   setSpeakingUsers((prev) => ({ ...prev, [userId]: isSpeaking }));
-  // }, []);
 
   const updateMembers = useCallback(() => {
     const users = getRemoteUsers();
@@ -137,7 +133,7 @@ export default function MeetingRoom() {
             ]);
           }
         },
-        ({ id, name, host, type }) => {
+        ({ id, name, host }) => {
           if (id) upsertUser({ id, name, host });
         }
       );
@@ -159,7 +155,9 @@ export default function MeetingRoom() {
                 a.currentTime = 0;
                 a.play().catch(() => {});
               }
-            } catch {}
+            } catch (e) {
+              console.log(e);
+            }
           }
         });
 
@@ -180,7 +178,7 @@ export default function MeetingRoom() {
     } finally {
       setJoining(false);
     }
-  }, [data, t, baseUrl, upsertUser, userDirectory ]);
+  }, [data, t, baseUrl, upsertUser, userDirectory]);
 
   const handleLeave = useCallback(async () => {
     try {
@@ -309,7 +307,7 @@ export default function MeetingRoom() {
       [...members].sort((a, b) => (a.host === b.host ? 0 : a.host ? -1 : 1)),
     [members]
   );
-const anyScreenActive = !!currentScreenSharer || screenActive;
+  const anyScreenActive = !!currentScreenSharer || screenActive;
 
   useEffect(() => {
     setCurrentScreenSharer(getScreenSharer());
@@ -318,6 +316,9 @@ const anyScreenActive = !!currentScreenSharer || screenActive;
       unsub();
     };
   }, []);
+  useEffect(() => {
+    onRemoteRosterChanged(() => updateMembers());
+  }, [updateMembers]);
 
   if (loading) {
     return (
@@ -328,7 +329,7 @@ const anyScreenActive = !!currentScreenSharer || screenActive;
       </div>
     );
   }
-
+ 
   return (
     <div className="bg-[var(--color-primary)] min-h-screen text-white ">
       <Header />
@@ -353,8 +354,10 @@ const anyScreenActive = !!currentScreenSharer || screenActive;
               members={members}
               isCurrentUserHost={userDirectory[selfId]?.host}
               currentUserId={selfId}
-              onMuteRemoteUser={muteUserLocally}
-              onStopRemoteVideo={stopUserVideoLocally}
+              // onMuteRemoteUser={muteUserLocally}
+              // onStopRemoteVideo={stopUserVideoLocally}
+
+              // setMicActive = {setMicActive}
             />
           )}
 
@@ -388,7 +391,7 @@ const anyScreenActive = !!currentScreenSharer || screenActive;
                     return (
                       <div
                         key={user.id}
-                        className={`w-[150px] h-[150px] bg-sky-500 rounded-full overflow-hidden ${speakingClass}`}
+                        className={`w-[150px] h-[150px]  bg-sky-500 rounded-xl overflow-hidden ${speakingClass}`}
                       >
                         <div
                           id={`player-${user.id}`}
@@ -445,6 +448,7 @@ const anyScreenActive = !!currentScreenSharer || screenActive;
               micDisabled={!joined || joining}
               camDisabled={!joined || joining}
               screenDisabled={!joined || joining}
+              members={members}
             />
           </div>
 
