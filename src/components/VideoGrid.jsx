@@ -21,7 +21,7 @@ export default function VideoGrid({ joined, children, fullBleed  }) {
                 {joined ? "" : "Stream Not Started"}
               </p>
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 items-center justify-center w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 place-content-center w-full overflow-y-auto overflow-x-hidden">
               {children ? children : <div className="text-gray-400">No streams</div>}
             </div>
           </>

@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { useMeet } from "../context/MeetContext";
-import { Trash } from "lucide-react";
+import { Hand, Mic, Trash } from "lucide-react";
 
 export default function MembersList({
   members = [],
@@ -14,8 +14,14 @@ export default function MembersList({
       [...members].sort((a, b) => (a.host === b.host ? 0 : a.host ? -1 : 1)),
     [members]
   );
-  const { muteAll, endForAll, muteUser, kickedUser } = useMeet();
-
+  const {
+    muteAll,
+    endForAll,
+    muteUser,
+    kickedUser,
+    adminLowerHand,
+    // raisedHands,
+  } = useMeet();
   return (
     <aside
       id="members__container"
@@ -86,18 +92,18 @@ export default function MembersList({
                     <button
                       type="button"
                       onClick={() => muteUser?.(m.id)}
-                      className="p-1 rounded-md bg-[var(--color-accent)] text-white hover:opacity-90"
+                      className={`relative  rounded-md ${
+                        m.audio
+                          ? "bg-[var(--color-secondary)]"
+                          : "bg-[var(--color-accent)]"
+                      }`}
                       title="Mute guest mic (local)"
                       aria-label={`Mute ${m.name || m.id}`}
                     >
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <path d="M12 2a2 2 0 0 1 2 2v7a2 2 0 1 1-4 0V4a2 2 0 0 1 2-2zM6 9v2a6 6 0 0 0 12 0V9h2v2a8 8 0 0 1-7 7.938V21h3v2H8v-2h3v-2.062A8 8 0 0 1 4 11V9h2z" />
-                      </svg>
+                    <Mic />
+                      {!m.audio && (
+                        <span className="absolute left-1/2 top-1/2 w-[18px] h-[2px] bg-white rotate-45 -translate-x-1/2 -translate-y-1/2 rounded" />
+                      )}
                     </button>
 
                     {/* <button
@@ -117,7 +123,12 @@ export default function MembersList({
                       </svg>
                     </button> */}
                     <span onClick={() => kickedUser(m.id)}>
-                     <Trash />
+                      <Trash />
+                    </span>
+                    <span
+                      onClick={() => adminLowerHand(m.id)}
+                    >
+                      <Hand />{" "}
                     </span>
                   </div>
                 )}

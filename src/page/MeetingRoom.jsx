@@ -9,7 +9,7 @@ import {
   initRTCClient,
   joinRoom,
   leaveRoom,
-  toggleMic,
+  // toggleMic,
   toggleScreenShare,
   getRemoteUsers,
   localTracks,
@@ -40,7 +40,7 @@ import {
 } from "../services/agoraRTMService";
 
 export default function MeetingRoom() {
-  const {data, loading, setMicActive, micActive } = useMeet();
+  const { data, loading, setMicActive, micActive } = useMeet();
   const baseUrl = import.meta.env.VITE_BASE_URL;
 
   const [joining, setJoining] = useState(false);
@@ -52,9 +52,9 @@ export default function MeetingRoom() {
   const [chatVisible, setChatVisible] = useState(true);
   const [membersVisible, setMembersVisible] = useState(true);
   const [currentScreenSharer, setCurrentScreenSharer] = useState(null);
-  const speakingPrevRef = useRef({});
   const [speakingUsers, setSpeakingUsers] = useState({});
   const [userDirectory, setUserDirectory] = useState({});
+  const speakingPrevRef = useRef({});
 
   const upsertUser = useCallback((u) => {
     if (!u?.id) return;
@@ -64,7 +64,6 @@ export default function MeetingRoom() {
       [id]: { ...(prev[id] || {}), ...u, id },
     }));
   }, []);
-
 
   const params = new URLSearchParams(window.location.search);
   const t = params.get("payload");
@@ -178,7 +177,7 @@ export default function MeetingRoom() {
     } finally {
       setJoining(false);
     }
-  }, [data, t, baseUrl, upsertUser, userDirectory]);
+  }, [data, t, upsertUser, userDirectory]);
 
   const handleLeave = useCallback(async () => {
     try {
@@ -208,13 +207,7 @@ export default function MeetingRoom() {
       ...m,
       { system: true, name: "Mumble Bot", text: "👋 You left the room" },
     ]);
-  }, [baseUrl, t]);
-
-  // Toggle Mic
-  const handleToggleMic = useCallback(async () => {
-    const active = await toggleMic();
-    setMicActive(active);
-  }, []);
+  }, [t]);
 
   // Toggle Camera
   const handleToggleCam = useCallback(async () => {
@@ -329,153 +322,148 @@ export default function MeetingRoom() {
       </div>
     );
   }
- 
+
   return (
-    <div className="bg-[var(--color-primary)] min-h-screen text-white ">
+    <div className="bg-[var(--color-primary)] h-auto  sm:h-screen text-white ">
       <Header />
 
       {!joined ? (
         <Loading handleJoin={handleJoin} isJoining={joining} />
       ) : (
-        <main
-          className={`pt-24 max-w-9/10 mx-auto grid h-screen gap-4 transition-all duration-300 justify-center items-center  
+        <main className={` pt-24 max-w-9/10 mx-auto `}>
+          <div
+            className={`grid  gap-4 transition-all duration-300 place-content-center w-full mx-auto
             ${
               membersVisible && chatVisible
-                ? "md:grid-cols-[250px_1fr_300px]"
+                ? "md:grid-cols-[250px_1fr_260px]"
                 : membersVisible
                 ? "md:grid-cols-[250px_1fr]"
                 : chatVisible
                 ? "md:grid-cols-[1fr_300px] "
                 : "md:grid-cols-1"
             }`}
-        >
-          {membersVisible && (
-            <MembersList
-              members={members}
-              isCurrentUserHost={userDirectory[selfId]?.host}
-              currentUserId={selfId}
-              // onMuteRemoteUser={muteUserLocally}
-              // onStopRemoteVideo={stopUserVideoLocally}
+          >
+            {membersVisible && (
+              <MembersList
+                members={members}
+                isCurrentUserHost={userDirectory[selfId]?.host}
+                currentUserId={selfId}
+              />
+            )}
 
-              // setMicActive = {setMicActive}
-            />
-          )}
-
-          <div className="flex flex-col max-h-[70vh] w-full relative mx-auto">
-            <VideoGrid joined={joined} fullBleed={anyScreenActive}>
-              {anyScreenActive ? (
-                <div className="relative w-full h-full bg-black rounded-lg overflow-hidden 0">
-                  {screenActive ? (
-                    <div ref={screenVideoRef} className="absolute inset-0" />
-                  ) : currentScreenSharer ? (
-                    <div
-                      id={`player-screen-${currentScreenSharer}`}
-                      className="absolute inset-0"
-                    />
-                  ) : null}
-                </div>
-              ) : (
-                <>
-                  {joined && localVideoTrack && (
-                    <div className="w-[150px] h-[150px] bg-black rounded-full overflow-hidden mx-auto">
-                      <div ref={localVideoRef} className="w-full h-full"></div>
-                    </div>
-                  )}
-
-                  {sortedMembers.map((user) => {
-                    const isSpeaking = !!speakingUsers[user.id];
-                    const speakingClass = isSpeaking
-                      ? "ring-4 ring-[var(--color-secondary)] animate-pulse"
-                      : "";
-
-                    return (
+            <div className="flex flex-col max-h-[70vh] w-full relative mx-auto overflow-y-auto">
+              <VideoGrid joined={joined} fullBleed={anyScreenActive}>
+                {anyScreenActive ? (
+                  <div className="relative w-full h-full bg-black rounded-lg overflow-x-hidden 0">
+                    {screenActive ? (
+                      <div ref={screenVideoRef} className="absolute inset-0" />
+                    ) : currentScreenSharer ? (
                       <div
-                        key={user.id}
-                        className={`w-[150px] h-[150px]  bg-sky-500 rounded-xl overflow-hidden ${speakingClass}`}
-                      >
+                        id={`player-screen-${currentScreenSharer}`}
+                        className="absolute inset-0"
+                      />
+                    ) : null}
+                  </div>
+                ) : (
+                  <>
+                    {joined && localVideoTrack && (
+                      <div className="w-[150px] h-[150px] bg-black rounded-full overflow-x-hidden overflow-y-auto mx-auto">
                         <div
-                          id={`player-${user.id}`}
-                          className="w-full h-full text-center flex justify-center items-center"
-                        >
-                          <span className="text-white">{user.name}</span>
-                        </div>
+                          ref={localVideoRef}
+                          className="w-full h-full"
+                        ></div>
                       </div>
-                    );
-                  })}
-                </>
-              )}
-            </VideoGrid>
+                    )}
 
-            <Controls
-              joined={joined}
-              onJoin={handleJoin}
-              onLeave={handleLeave}
-              onToggleMic={async () => {
-                if (!joined) return;
-                try {
-                  await handleToggleMic();
-                } catch (e) {
-                  console.error(e);
-                }
-              }}
-              onToggleCamera={async () => {
-                if (!joined) return;
-                try {
-                  await handleToggleCam();
-                } catch (e) {
-                  console.error(e);
-                }
-              }}
-              onToggleScreen={async () => {
-                if (!joined) return;
-                if (!canStartScreenShare(selfId)) {
-                  console.warn("Another user is already sharing the screen.");
-                  return;
-                }
-                try {
-                  await handleToggleScreen();
-                } catch (e) {
-                  console.error(e);
-                }
-              }}
-              onToggleChat={() => setChatVisible((v) => !v)}
-              onToggleMembers={() => setMembersVisible((v) => !v)}
-              micActive={micActive}
-              camActive={!!localVideoTrack}
-              screenActive={screenActive}
-              chatVisible={chatVisible}
-              membersVisible={membersVisible}
-              micDisabled={!joined || joining}
-              camDisabled={!joined || joining}
-              screenDisabled={!joined || joining}
-              members={members}
-            />
+                    {sortedMembers.map((user) => {
+                      const isSpeaking = !!speakingUsers[user.id];
+                      const speakingClass = isSpeaking
+                        ? "ring-4 ring-[var(--color-secondary)] animate-pulse"
+                        : "";
+
+                      return (
+                        <div
+                          key={user.id}
+                          className="flex flex-wrap justify-center"
+                        >
+                          <div
+                            className={`w-[150px] h-[150px]  bg-sky-500 rounded-xl  ${speakingClass}`}
+                          >
+                            <div
+                              id={`player-${user.id}`}
+                              className="w-full h-full text-center flex justify-center items-center"
+                            >
+                              <span className="text-white">{user.name}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
+              </VideoGrid>
+            </div>
+
+            {chatVisible && (
+              <ChatBox
+                messages={messages}
+                onSend={async (text) => {
+                  const payload = {
+                    userId: selfId,
+                    name:
+                      userDirectory[selfId]?.name || data?.user_name || selfId,
+                    text,
+                    ts: Date.now(),
+                  };
+                  upsertUser({ id: payload.userId, name: payload.name });
+
+                  setMessages((m) => [...m, payload]);
+                  try {
+                    await sendRTMMessage(payload);
+                  } catch (e) {
+                    console.error("RTM send failed:", e);
+                  }
+                }}
+              />
+            )}
           </div>
-
-          {chatVisible && (
-            <ChatBox
-              messages={messages}
-              onSend={async (text) => {
-                const payload = {
-                  userId: selfId,
-                  name:
-                    userDirectory[selfId]?.name || data?.user_name || selfId,
-                  text,
-                  ts: Date.now(),
-                };
-                upsertUser({ id: payload.userId, name: payload.name });
-
-                setMessages((m) => [...m, payload]);
-                try {
-                  await sendRTMMessage(payload);
-                } catch (e) {
-                  console.error("RTM send failed:", e);
-                }
-              }}
-            />
-          )}
         </main>
       )}
+      <Controls
+        joined={joined}
+        onJoin={handleJoin}
+        onLeave={handleLeave}
+        onToggleCamera={async () => {
+          if (!joined) return;
+          try {
+            await handleToggleCam();
+          } catch (e) {
+            console.error(e);
+          }
+        }}
+        onToggleScreen={async () => {
+          if (!joined) return;
+          if (!canStartScreenShare(selfId)) {
+            console.warn("Another user is already sharing the screen.");
+            return;
+          }
+          try {
+            await handleToggleScreen();
+          } catch (e) {
+            console.error(e);
+          }
+        }}
+        onToggleChat={() => setChatVisible((v) => !v)}
+        onToggleMembers={() => setMembersVisible((v) => !v)}
+        micActive={micActive}
+        camActive={!!localVideoTrack}
+        screenActive={screenActive}
+        chatVisible={chatVisible}
+        membersVisible={membersVisible}
+        camDisabled={!joined || joining}
+        screenDisabled={!joined || joining}
+        members={members}
+      />
     </div>
   );
 }
