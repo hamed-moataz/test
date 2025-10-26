@@ -20,8 +20,10 @@ export default function MembersList({
     muteUser,
     kickedUser,
     adminLowerHand,
-    // raisedHands,
+    raisedHands,
+    hasRaised,
   } = useMeet();
+  console.log(hasRaised ,'from test')
   return (
     <aside
       id="members__container"
@@ -68,45 +70,54 @@ export default function MembersList({
         {sortedMembers.length === 0 ? (
           <p className="text-sm text-gray-400">No members yet</p>
         ) : (
-          sortedMembers.map((m) => (
-            <div
-              key={m.id}
-              className="member__wrapper flex items-center justify-between gap-3 p-2 rounded-md bg-[#1f1f1f]"
-            >
-              <p className="member_name text-sm truncate">{m.name || m.id}</p>
+          sortedMembers.map((m) => {
+            const isRaised =
+              raisedHands.has(m.id) || (m.id === currentUserId && hasRaised);
+            return (
+              <div
+                key={m.id}
+                className="member__wrapper flex items-center justify-between gap-3 p-2 rounded-md bg-[#1f1f1f]"
+              >
+                <p className="member_name text-sm truncate">{m.name || m.id}</p>
+                {isRaised && (
+                  <Hand
+                    className="text-yellow-400 animate-bounce"
+                    title="Raised Hand"
+                  />
+                )}
 
-              <div className="flex items-center gap-2">
-                <span
-                  className={`text-xs px-2 py-1 rounded-full ${
-                    m.host
-                      ? "bg-yellow-500/20 text-yellow-400 border border-yellow-600/40"
-                      : "bg-gray-500/20 text-gray-300 border border-gray-600/40"
-                  }`}
-                  title={m.host ? "Admin" : "Guest"}
-                >
-                  {m.host ? "Admin" : "Guest"}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full ${
+                      m.host
+                        ? "bg-yellow-500/20 text-yellow-400 border border-yellow-600/40"
+                        : "bg-gray-500/20 text-gray-300 border border-gray-600/40"
+                    }`}
+                    title={m.host ? "Admin" : "Guest"}
+                  >
+                    {m.host ? "Admin" : "Guest"}
+                  </span>
 
-                {isCurrentUserHost && !m.host && m.id !== currentUserId && (
-                  <div className="flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => muteUser?.(m.id)}
-                      className={`relative  rounded-md ${
-                        m.audio
-                          ? "bg-[var(--color-secondary)]"
-                          : "bg-[var(--color-accent)]"
-                      }`}
-                      title="Mute guest mic (local)"
-                      aria-label={`Mute ${m.name || m.id}`}
-                    >
-                    <Mic />
-                      {!m.audio && (
-                        <span className="absolute left-1/2 top-1/2 w-[18px] h-[2px] bg-white rotate-45 -translate-x-1/2 -translate-y-1/2 rounded" />
-                      )}
-                    </button>
+                  {isCurrentUserHost && !m.host && m.id !== currentUserId && (
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => muteUser?.(m.id)}
+                        className={`relative  rounded-md ${
+                          m.audio
+                            ? "bg-[var(--color-secondary)]"
+                            : "bg-[var(--color-accent)]"
+                        }`}
+                        title="Mute guest mic (local)"
+                        aria-label={`Mute ${m.name || m.id}`}
+                      >
+                        <Mic />
+                        {!m.audio && (
+                          <span className="absolute left-1/2 top-1/2 w-[18px] h-[2px] bg-white rotate-45 -translate-x-1/2 -translate-y-1/2 rounded" />
+                        )}
+                      </button>
 
-                    {/* <button
+                      {/* <button
                       type="button"
                       onClick={() => onStopRemoteVideo?.(m.id)}
                       className="p-1 rounded-md bg-[var(--color-accent)] text-white hover:opacity-90"
@@ -122,19 +133,24 @@ export default function MembersList({
                         <path d="M17 10.5V7a2 2 0 0 0-2-2H3A2 2 0 0 0 1 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3.5l6 4v-11l-6 4z" />
                       </svg>
                     </button> */}
-                    <span onClick={() => kickedUser(m.id)}>
-                      <Trash />
-                    </span>
-                    <span
-                      onClick={() => adminLowerHand(m.id)}
-                    >
-                      <Hand />{" "}
-                    </span>
-                  </div>
-                )}
+                      <span onClick={() => kickedUser(m.id)}>
+                        <Trash />
+                      </span>
+                      {isRaised && (
+                        <span
+                          onClick={() => adminLowerHand(m.id)}
+                          className="cursor-pointer"
+                          title="Lower hand"
+                        >
+                          <Hand className="text-red-400" />
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </aside>

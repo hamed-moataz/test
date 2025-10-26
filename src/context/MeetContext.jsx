@@ -24,7 +24,6 @@ export const MeetProvider = ({ children }) => {
   const [data, setData] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [micActive, setMicActive] = useState(false);
-  // NEW: gate for showing <Loading /> again after kick/end
   const [showLoadingGate, setShowLoadingGate] = useState(false);
 
   const [hasRaised, setHasRaised] = useState(false);
@@ -129,9 +128,7 @@ export const MeetProvider = ({ children }) => {
 
   const riseHand = async () => {
     playHandSound();
-
     setHasRaised(true);
-
     setRaisedHands((prev) => new Set(prev).add(userId));
     try {
       const res = await fetch(`${baseUrl}/api/agora/raise/hand`, {
@@ -141,11 +138,9 @@ export const MeetProvider = ({ children }) => {
       });
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      console.log(data, "from api sound");
       return data;
     } catch (error) {
       console.log(error);
-      setHasRaised(false);
       setHasRaised(false);
       setRaisedHands((prev) => {
         const s = new Set(prev);
@@ -321,47 +316,45 @@ export const MeetProvider = ({ children }) => {
       setShowLoadingGate(true);
     });
 
-    bind(`student.student.raise.hand`, "students.actions", (payload) => {
+  bind("students.actions", `student.student.raise.hand`, (payload) => {
+    console.log(payload , 'uid')
+  try {
+    playHandSound();
+    const evt = typeof payload === "string" ? JSON.parse(payload) : payload;
+    const uid = String(evt?.user_uuid || "");
+    if (!uid) return;
+
+    if (uid === userId) {
+      setHasRaised(true);
+    }
+
+    setRaisedHands((prev) => new Set(prev).add(uid));
+
+  } catch (e) {
+    console.log("actions parse error:", e);
+  }
+});
+
+    bind(`student.low.hand`, "low.hand", (payload) => {
       try {
         const evt = typeof payload === "string" ? JSON.parse(payload) : payload;
-        const uid = String(evt?.userId || "");
+        const uid = String(evt?.user_uuid || "");
         if (!uid) return;
-        playHandSound();
+
+        setRaisedHands((prev) => {
+          const s = new Set(prev);
+          s.delete(uid);
+          return s;
+        });
 
         if (uid === userId) {
-          setHasRaised(true);
+          setHasRaised(false);
         }
       } catch (e) {
         console.log("actions parse error:", e);
       }
     });
-    bind(`student.low.hand.${userId}`, "low.hand", (payload) => {
-      try {
-        const evt = typeof payload === "string" ? JSON.parse(payload) : payload;
-        const uid = String(evt?.userId || "");
-        if (!uid) return;
 
-        if (evt.type === "hand-raised") {
-          setRaisedHands((prev) => {
-            const s = new Set(prev);
-            s.add(uid);
-            return s;
-          });
-          if (uid === userId) setHasRaised(true);
-
-          // playHandSound();
-        } else if (evt.type === "hand-lowered") {
-          setRaisedHands((prev) => {
-            const s = new Set(prev);
-            s.delete(uid);
-            return s;
-          });
-          if (uid === userId) setHasRaised(false);
-        }
-      } catch (e) {
-        console.log("actions parse error:", e);
-      }
-    });
     return () => {
       try {
         subsRef.current.forEach(({ channelName, event, handler }) => {
