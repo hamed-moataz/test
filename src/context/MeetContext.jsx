@@ -317,7 +317,6 @@ export const MeetProvider = ({ children }) => {
     });
 
   bind("students.actions", `student.student.raise.hand`, (payload) => {
-    console.log(payload , 'uid')
   try {
     playHandSound();
     const evt = typeof payload === "string" ? JSON.parse(payload) : payload;

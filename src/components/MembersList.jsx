@@ -23,7 +23,6 @@ export default function MembersList({
     raisedHands,
     hasRaised,
   } = useMeet();
-  console.log(hasRaised ,'from test')
   return (
     <aside
       id="members__container"
