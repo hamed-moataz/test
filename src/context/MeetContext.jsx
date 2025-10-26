@@ -335,7 +335,7 @@ export const MeetProvider = ({ children }) => {
           });
           if (uid === userId) setHasRaised(true);
 
-          // playHandSound();
+           playHandSound();
         } else if (evt.type === "hand-lowered") {
           setRaisedHands((prev) => {
             const s = new Set(prev);
