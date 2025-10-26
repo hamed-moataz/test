@@ -326,23 +326,10 @@ export const MeetProvider = ({ children }) => {
         const evt = typeof payload === "string" ? JSON.parse(payload) : payload;
         const uid = String(evt?.userId || "");
         if (!uid) return;
+        playHandSound();
 
-        if (evt.type === "hand-raised") {
-          setRaisedHands((prev) => {
-            const s = new Set(prev);
-            s.add(uid);
-            return s;
-          });
-          if (uid === userId) setHasRaised(true);
-
-           playHandSound();
-        } else if (evt.type === "hand-lowered") {
-          setRaisedHands((prev) => {
-            const s = new Set(prev);
-            s.delete(uid);
-            return s;
-          });
-          if (uid === userId) setHasRaised(false);
+        if (uid === userId) {
+          setHasRaised(true);
         }
       } catch (e) {
         console.log("actions parse error:", e);
