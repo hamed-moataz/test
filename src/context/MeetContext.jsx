@@ -8,7 +8,16 @@ import React, {
   useState,
 } from "react";
 import { decryptMeetToken } from "../services/crypto-utils";
-import { leaveRoom, muteMic, toggleMic } from "../services/agoraRTCService";
+import {
+  leaveRoom,
+  muteMic,
+  toggleMic,
+  closeStream,
+  toggleScreenShare,
+  subscribeScreenShare,
+  getScreenSharer,
+  localTracks,
+} from "../services/agoraRTCService";
 import Pusher from "pusher-js";
 import sound from "../assets/happy-message-ping-351298.mp3";
 
@@ -28,6 +37,10 @@ export const MeetProvider = ({ children }) => {
 
   const [hasRaised, setHasRaised] = useState(false);
   const [raisedHands, setRaisedHands] = useState(() => new Set());
+
+  const [screenActive, setScreenActive] = useState(false);
+  const [currentScreenSharer, setCurrentScreenSharer] = useState(null);
+  const [screenSharerId, setScreenSharerId] = useState(getScreenSharer());
 
   const handSoundRef = useRef(
     typeof Audio !== "undefined" ? new Audio(sound) : null
@@ -69,6 +82,66 @@ export const MeetProvider = ({ children }) => {
     const active = await toggleMic();
     setMicActive(active);
   }, []);
+
+  const handleToggleScreen = useCallback(async () => {
+    const active = await toggleScreenShare();
+    const sharerId = active
+      ? data?.user_uuid
+        ? String(data.user_uuid)
+        : "local"
+      : null;
+
+    setScreenActive(active);
+    setCurrentScreenSharer(sharerId);
+
+    setScreenSharerId(sharerId);
+  }, [data?.user_uuid]);
+
+  const [localVideoTrack, setLocalVideoTrack] = useState(null);
+
+  const [remoteUsers, setRemoteUsers] = useState([]);
+  const [userDirectory, setUserDirectory] = useState({});
+
+  const selfId = String(data?.user_uuid || "");
+
+  const members = useMemo(
+    () => [
+      {
+        id: selfId,
+        name: data?.user_name,
+        host: data?.host,
+        audio: !!localTracks.audioTrack,
+        video: !!localTracks.videoTrack,
+        // screen : !!localTracks.screenTrack
+      },
+      ...remoteUsers.map((u) => {
+        const id = String(u.uid);
+        const entry = userDirectory[id];
+        return {
+          id,
+          name: entry?.name || u.user_name || u.name || id,
+          host: !!entry?.host,
+          audio: !!u.audioTrack,
+          video: !!u.videoTrack,
+          // screen : !!u.screenTrack
+        };
+      }),
+    ],
+    [
+      selfId,
+      data?.user_name,
+      data?.host,
+      remoteUsers,
+      userDirectory,
+      localVideoTrack,
+      // screenActive
+    ]
+  );
+  const sortedMembers = useMemo(
+    () =>
+      [...members].sort((a, b) => (a.host === b.host ? 0 : a.host ? -1 : 1)),
+    [members]
+  );
 
   const muteUser = async (id) => {
     try {
@@ -170,6 +243,21 @@ export const MeetProvider = ({ children }) => {
       console.log("Error lowering hand:", error);
     }
   };
+  const closeStreamById = async (id) => {
+    try {
+      const res = await fetch(`${baseUrl}/api/agora/start/stream/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ payload: t }),
+      });
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+
+      return data;
+    } catch (error) {
+      console.log("Error lowering hand:", error);
+    }
+  };
   const handleToggleHand = useCallback(async () => {
     if (hasRaised) {
       await lowerHand();
@@ -219,10 +307,10 @@ export const MeetProvider = ({ children }) => {
           body: JSON.stringify({ payload: t }),
         });
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
+        // console.log(payloadData , 'from data')
         const workshopData = await res.json();
         setWorkshop(workshopData);
-
+        // console.log(workshopData , 'from ')
         const hasLecture = !!workshopData?.lecture_uuid;
         const hasUser = !!workshopData?.user_uuid;
         const isHost =
@@ -232,6 +320,8 @@ export const MeetProvider = ({ children }) => {
           hasLecture && hasUser && (isHost === true || isHost === false);
         setAuthorized(isValid);
         setData(payloadData);
+   
+        
       } catch (err) {
         console.error("Verification error:", err);
         setAuthorized(false);
@@ -263,7 +353,8 @@ export const MeetProvider = ({ children }) => {
       "student.muted",
       async () => {
         try {
-          await handleToggleMic();
+          await muteMic();
+          setMicActive(false);
         } catch (e) {
           console.log(e);
         }
@@ -316,23 +407,22 @@ export const MeetProvider = ({ children }) => {
       setShowLoadingGate(true);
     });
 
-  bind("students.actions", `student.student.raise.hand`, (payload) => {
-  try {
-    playHandSound();
-    const evt = typeof payload === "string" ? JSON.parse(payload) : payload;
-    const uid = String(evt?.user_uuid || "");
-    if (!uid) return;
+    bind("students.actions", `student.student.raise.hand`, (payload) => {
+      try {
+        playHandSound();
+        const evt = typeof payload === "string" ? JSON.parse(payload) : payload;
+        const uid = String(evt?.user_uuid || "");
+        if (!uid) return;
 
-    if (uid === userId) {
-      setHasRaised(true);
-    }
+        if (uid === userId) {
+          setHasRaised(true);
+        }
 
-    setRaisedHands((prev) => new Set(prev).add(uid));
-
-  } catch (e) {
-    console.log("actions parse error:", e);
-  }
-});
+        setRaisedHands((prev) => new Set(prev).add(uid));
+      } catch (e) {
+        console.log("actions parse error:", e);
+      }
+    });
 
     bind(`student.low.hand`, "low.hand", (payload) => {
       try {
@@ -353,6 +443,27 @@ export const MeetProvider = ({ children }) => {
         console.log("actions parse error:", e);
       }
     });
+    bind(
+      `users.start.stream.in.${lectureId}`,
+      `users.start.stream`,
+
+      async (payload) => {
+        console.log(payload.user, "pay streem");
+        try {
+          const evt =
+            typeof payload === "string" ? JSON.parse(payload) : payload;
+          const uid = String(evt?.user || "");
+          if (!uid) return;
+
+          if (uid === userId) {
+            await closeStream();
+            setScreenActive(false);
+          }
+        } catch (e) {
+          console.log("actions parse error:", e);
+        }
+      }
+    );
 
     return () => {
       try {
@@ -369,7 +480,15 @@ export const MeetProvider = ({ children }) => {
       endedOnceRef.current = false;
     };
   }, [APP_KEY, CLUSTER, userId, lectureId]);
+  useEffect(() => {
+    // if (typeof subscribeScreenShare !== "function") return;
 
+    const unsubscribe = subscribeScreenShare((newSharerId) => {
+      setScreenSharerId(newSharerId);
+    });
+
+    return () => unsubscribe();
+  }, []);
   if (showLoadingGate) {
     window.location.reload();
   }
@@ -394,6 +513,23 @@ export const MeetProvider = ({ children }) => {
         hasRaised,
         raisedHands,
         adminLowerHand,
+        screenSharerId,
+        setScreenSharerId,
+        closeStreamById,
+        screenActive,
+        setScreenActive,
+        currentScreenSharer,
+        setCurrentScreenSharer,
+        handleToggleScreen,
+        localVideoTrack,
+        setLocalVideoTrack,
+        remoteUsers,
+        setRemoteUsers,
+        userDirectory,
+        setUserDirectory,
+        selfId,
+        members,
+        sortedMembers,
       }}
     >
       {children}

@@ -6,7 +6,7 @@ export default function Controls({
   joined,
   onLeave,
   onToggleCamera,
-  onToggleScreen,
+  // onToggleScreen,
   onToggleChat,
   onToggleMembers,
   camActive = false,
@@ -18,8 +18,7 @@ export default function Controls({
   camDisabled,
   screenDisabled,
 }) {
-  const { micActive, hasRaised, handleToggleMic, handleToggleHand } = useMeet();
-
+  const { micActive, hasRaised, handleToggleMic, handleToggleHand ,handleToggleScreen} = useMeet();
   const computedMicDisabled = useMemo(
     () => (typeof micDisabled === "boolean" ? micDisabled : !joined),
     [micDisabled, joined]
@@ -94,7 +93,7 @@ export default function Controls({
             {/* Screen Share */}
             <button
               id="screen-btn"
-              onClick={safe(onToggleScreen, computedScreenDisabled)}
+              onClick={safe(handleToggleScreen, computedScreenDisabled)}
               disabled={computedScreenDisabled}
               title={computedScreenDisabled ? "Join first to share screen" : ""}
               className={`p-3 rounded-md ${

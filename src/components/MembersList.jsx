@@ -1,19 +1,10 @@
-import React, { useMemo } from "react";
 import { useMeet } from "../context/MeetContext";
-import { Hand, Mic, Trash } from "lucide-react";
+import { Hand, Mic, Trash, MonitorUp } from "lucide-react";
 
 export default function MembersList({
-  members = [],
   isCurrentUserHost = false,
   currentUserId,
-  // onMuteRemoteUser,
-  // onStopRemoteVideo,
 }) {
-  const sortedMembers = useMemo(
-    () =>
-      [...members].sort((a, b) => (a.host === b.host ? 0 : a.host ? -1 : 1)),
-    [members]
-  );
   const {
     muteAll,
     endForAll,
@@ -22,6 +13,10 @@ export default function MembersList({
     adminLowerHand,
     raisedHands,
     hasRaised,
+    closeStreamById,
+    sortedMembers,
+    micActive,
+    screenActive,
   } = useMeet();
   return (
     <aside
@@ -72,12 +67,23 @@ export default function MembersList({
           sortedMembers.map((m) => {
             const isRaised =
               raisedHands.has(m.id) || (m.id === currentUserId && hasRaised);
+            const isMicActive = m.id === currentUserId ? micActive : m.audio;
+            const isSharingScreen =
+              m.id === currentUserId ? screenActive : m.video;
             return (
               <div
                 key={m.id}
                 className="member__wrapper flex items-center justify-between gap-3 p-2 rounded-md bg-[#1f1f1f]"
               >
                 <p className="member_name text-sm truncate">{m.name || m.id}</p>
+                {isMicActive && (
+                  <Mic
+                    className="text-green-400"
+                    size={18}
+                    title="Microphone Active"
+                  />
+                )}
+
                 {isRaised && (
                   <Hand
                     className="text-yellow-400 animate-bounce"
@@ -85,6 +91,13 @@ export default function MembersList({
                   />
                 )}
 
+                {isSharingScreen && (
+                  <MonitorUp
+                    className="text-green-400 cursor-pointer"
+                    size={18}
+                    title="Screen Sharing Active"
+                  />
+                )}
                 <div className="flex items-center gap-2">
                   <span
                     className={`text-xs px-2 py-1 rounded-full ${
@@ -101,8 +114,11 @@ export default function MembersList({
                     <div className="flex gap-1">
                       <button
                         type="button"
-                        onClick={() => muteUser?.(m.id)}
-                        className={`relative  rounded-md ${
+                        onClick={() => {
+                          if (!m.audio) return;
+                          muteUser?.(m.id);
+                        }}
+                        className={`relative  rounded-md cursor-pointer ${
                           m.audio
                             ? "bg-[var(--color-secondary)]"
                             : "bg-[var(--color-accent)]"
@@ -110,30 +126,30 @@ export default function MembersList({
                         title="Mute guest mic (local)"
                         aria-label={`Mute ${m.name || m.id}`}
                       >
-                        <Mic />
+                        <Mic size={20} />
                         {!m.audio && (
                           <span className="absolute left-1/2 top-1/2 w-[18px] h-[2px] bg-white rotate-45 -translate-x-1/2 -translate-y-1/2 rounded" />
                         )}
                       </button>
 
-                      {/* <button
-                      type="button"
-                      onClick={() => onStopRemoteVideo?.(m.id)}
-                      className="p-1 rounded-md bg-[var(--color-accent)] text-white hover:opacity-90"
-                      title="Stop guest video (local)"
-                      aria-label={`Stop video of ${m.name || m.id}`}
-                    >
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
+                      <span
+                        onClick={() => {
+                          if (!m.video) return;
+                          closeStreamById(m.id);
+                        }}
                       >
-                        <path d="M17 10.5V7a2 2 0 0 0-2-2H3A2 2 0 0 0 1 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3.5l6 4v-11l-6 4z" />
-                      </svg>
-                    </button> */}
-                      <span onClick={() => kickedUser(m.id)}>
-                        <Trash />
+                        <MonitorUp
+                          className={`relative  rounded-md  cursor-pointer ${
+                            m.video ? "text-green-400 " : ""
+                          }`}
+                          size={20}
+                        />
+                      </span>
+                      <span
+                        className="cursor-pointer text-red-500"
+                        onClick={() => kickedUser(m.id)}
+                      >
+                        <Trash size={20} />
                       </span>
                       {isRaised && (
                         <span
@@ -141,7 +157,7 @@ export default function MembersList({
                           className="cursor-pointer"
                           title="Lower hand"
                         >
-                          <Hand className="text-red-400" />
+                          <Hand size={20} className="text-yellow-400" />
                         </span>
                       )}
                     </div>

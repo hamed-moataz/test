@@ -9,7 +9,11 @@ let screenSharerUid = null;
 const screenShareListeners = new Set();
 const notifyScreenShareChange = () => {
   for (const fn of screenShareListeners) {
-    try { fn(screenSharerUid); } catch (e) { console.log(e); }
+    try {
+      fn(screenSharerUid);
+    } catch (e) {
+      console.log(e);
+    }
   }
 };
 
@@ -59,27 +63,25 @@ export const initRTCClient = (onUserJoined, onUserLeft) => {
 
     // detect screen share
     let isScreen = mediaType === "screen";
-    if (!isScreen && mediaType === "video" && user.videoTrack) {
-      const msTrack = user.videoTrack.getMediaStreamTrack?.();
-      const label =
-        msTrack?.label?.toLowerCase?.() ||
-        user.videoTrack.getTrackLabel?.()?.toLowerCase?.() ||
-        "";
-      isScreen = /screen|window|display/.test(label);
+    if (mediaType === "video" && user.videoTrack) {
+      user.videoTrack.play();
+      remoteUsers[uid].videoTrack = user.videoTrack;
+      remoteUsers[uid].video = true;
     }
 
-    if (isScreen && user.videoTrack) {
+    if (isScreen && user.screenTrack) {
       screenSharerUid = uid;
+      remoteUsers[uid].screen = true;
       notifyScreenShareChange();
       const tryPlay = () => {
         const el =
           document.getElementById(`player-screen-${uid}`) ||
           document.getElementById(`player-${uid}`);
-        if (el) user.videoTrack.play(el);
+        if (el) user.screenTrack.play(el);
         else setTimeout(tryPlay, 80);
       };
       tryPlay();
-      remoteUsers[uid].videoTrack = user.videoTrack;
+      remoteUsers[uid].videoTrack = user.screenTrack;
     } else if (mediaType === "video" && user.videoTrack) {
       const camEl = document.getElementById(`player-${uid}`);
       if (camEl) user.videoTrack.play(camEl);
@@ -89,6 +91,7 @@ export const initRTCClient = (onUserJoined, onUserLeft) => {
     if (mediaType === "audio" && user.audioTrack) {
       user.audioTrack.play();
       remoteUsers[uid].audioTrack = user.audioTrack;
+      remoteUsers[uid].audio = true;
     }
 
     onUserJoined?.(Object.values(remoteUsers));
@@ -101,16 +104,24 @@ export const initRTCClient = (onUserJoined, onUserLeft) => {
 
     if (ru) {
       if (mediaType === "audio" && ru.audioTrack) {
-        try { ru.audioTrack.stop(); } catch(e) {
-          console.log(e)
+        try {
+          ru.audioTrack.stop();
+        } catch (e) {
+          console.log(e);
         }
         ru.audioTrack = null;
+        ru.audio = false;
       }
-      if (mediaType === "video" && ru.videoTrack) {
-        try { ru.videoTrack.stop(); } catch(e) {
-          console.log(e)
+      if ((mediaType === "video" || mediaType === "screen") && ru.videoTrack) {
+        try {
+          ru.videoTrack.stop();
+        } catch (e) {
+          console.log(e);
         }
         ru.videoTrack = null;
+        if (mediaType === "screen") {
+          ru.screen = false;
+        }
       }
     }
 
@@ -127,12 +138,20 @@ export const initRTCClient = (onUserJoined, onUserLeft) => {
     const uid = String(user.uid);
 
     const ru = remoteUsers[uid];
-    if (ru?.audioTrack) { try { ru.audioTrack.stop(); } catch(e) {
-          console.log(e)
-        } }
-    if (ru?.videoTrack) { try { ru.videoTrack.stop(); } catch(e) {
-          console.log(e)
-        } }
+    if (ru?.audioTrack) {
+      try {
+        ru.audioTrack.stop();
+      } catch (e) {
+        console.log(e);
+      }
+    }
+    if (ru?.videoTrack) {
+      try {
+        ru.videoTrack.stop();
+      } catch (e) {
+        console.log(e);
+      }
+    }
     delete remoteUsers[uid];
 
     if (String(screenSharerUid) === uid) {
@@ -145,7 +164,7 @@ export const initRTCClient = (onUserJoined, onUserLeft) => {
   });
 };
 
-// ===== Join 
+// ===== Join
 export const joinRoom = async (appId, channel, uid, token) => {
   if (!rtcClient) throw new Error("RTC client not initialized");
   await rtcClient.join(appId, channel, token, uid);
@@ -155,7 +174,12 @@ export const joinRoom = async (appId, channel, uid, token) => {
 export const leaveRoom = async () => {
   for (let key of ["audioTrack", "videoTrack", "screenTrack"]) {
     if (localTracks[key]) {
-      try { localTracks[key].stop?.(); localTracks[key].close?.(); } catch (e) { console.log(e); }
+      try {
+        localTracks[key].stop?.();
+        localTracks[key].close?.();
+      } catch (e) {
+        console.log(e);
+      }
       localTracks[key] = null;
     }
   }
@@ -168,12 +192,20 @@ export const leaveRoom = async () => {
 
   for (const uid of Object.keys(remoteUsers)) {
     const ru = remoteUsers[uid];
-    if (ru?.audioTrack) { try { ru.audioTrack.stop(); } catch(e) {
-          console.log(e)
-        } }
-    if (ru?.videoTrack) { try { ru.videoTrack.stop(); } catch(e) {
-          console.log(e)
-        } }
+    if (ru?.audioTrack) {
+      try {
+        ru.audioTrack.stop();
+      } catch (e) {
+        console.log(e);
+      }
+    }
+    if (ru?.videoTrack) {
+      try {
+        ru.videoTrack.stop();
+      } catch (e) {
+        console.log(e);
+      }
+    }
   }
   remoteUsers = {};
   isJoined = false;
@@ -201,10 +233,19 @@ export const toggleMic = async () => {
 
   if (needNewTrack) {
     try {
-      try { localTracks.audioTrack?.stop?.(); localTracks.audioTrack?.close?.(); } catch (e) { console.log(e); }
+      try {
+        localTracks.audioTrack?.stop?.();
+        localTracks.audioTrack?.close?.();
+      } catch (e) {
+        console.log(e);
+      }
       localTracks.audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
       await localTracks.audioTrack.setEnabled(true);
-      try { await rtcClient.publish([localTracks.audioTrack]); } catch (e) { console.log(e); }
+      try {
+        await rtcClient.publish([localTracks.audioTrack]);
+      } catch (e) {
+        console.log(e);
+      }
       return true;
     } catch (e) {
       console.error("toggleMic: create/publish mic failed", e);
@@ -225,7 +266,11 @@ export const toggleMic = async () => {
   try {
     await localTracks.audioTrack.setEnabled(target);
     if (target) {
-      try { await rtcClient.publish([localTracks.audioTrack]); } catch (e) { console.log(e); }
+      try {
+        await rtcClient.publish([localTracks.audioTrack]);
+      } catch (e) {
+        console.log(e);
+      }
     }
     return target;
   } catch (e) {
@@ -249,7 +294,11 @@ export const muteMic = async (muted = true) => setMicMuted(muted);
 export const createCameraTrack = async () => {
   if (!isJoined) throw new Error("Not joined yet");
   if (localTracks.videoTrack) {
-    try { localTracks.videoTrack.close(); } catch (e) { console.log(e); }
+    try {
+      localTracks.videoTrack.close();
+    } catch (e) {
+      console.log(e);
+    }
   }
   localTracks.videoTrack = await AgoraRTC.createCameraVideoTrack();
   await rtcClient.publish([localTracks.videoTrack]);
@@ -258,15 +307,27 @@ export const createCameraTrack = async () => {
 
 export const closeCameraTrack = async () => {
   if (localTracks.videoTrack) {
-    try { await rtcClient.unpublish([localTracks.videoTrack]); } catch (e) { console.log(e); }
-    try { localTracks.videoTrack.stop(); localTracks.videoTrack.close(); } catch (e) { console.log(e); }
+    try {
+      await rtcClient.unpublish([localTracks.videoTrack]);
+    } catch (e) {
+      console.log(e);
+    }
+    try {
+      localTracks.videoTrack.stop();
+      localTracks.videoTrack.close();
+    } catch (e) {
+      console.log(e);
+    }
     localTracks.videoTrack = null;
   }
 };
 
 export const toggleScreenShare = async () => {
   if (!isJoined) throw new Error("Not joined yet");
-
+  if (!canStartScreenShare(String(rtcClient.uid))) {
+    alert("Cannot start screen share: Another user is already sharing.");
+    return false;
+  }
   if (!localTracks.screenTrack) {
     localTracks.screenTrack = await AgoraRTC.createScreenVideoTrack(
       { encoderConfig: "720p", optimizationMode: "detail" },
@@ -276,15 +337,39 @@ export const toggleScreenShare = async () => {
 
     screenSharerUid = String(rtcClient.uid);
     notifyScreenShareChange();
+    rosterChangedCb?.();
     return true;
   } else {
-    try { await rtcClient.unpublish([localTracks.screenTrack]); } catch (e) { console.log(e); }
-    try { localTracks.screenTrack.close(); } catch (e) { console.log(e); }
-    localTracks.screenTrack = null;
+    try {
+      await rtcClient.unpublish([localTracks.screenTrack]);
+      localTracks.screenTrack.close();
+    } catch (e) {
+      console.log(e);
+    }
 
+    localTracks.screenTrack = null;
     screenSharerUid = null;
     notifyScreenShareChange();
+
+    rosterChangedCb?.();
     return false;
+  }
+};
+
+export const closeStream = async () => {
+  try {
+    await rtcClient.unpublish([localTracks.screenTrack]);
+
+    localTracks.screenTrack.close();
+
+    localTracks.screenTrack = null;
+    screenSharerUid = null;
+    notifyScreenShareChange();
+
+    rosterChangedCb?.();
+    return false;
+  } catch (err) {
+    console.error("Error while closing screen stream:", err);
   }
 };
 
@@ -293,15 +378,15 @@ export const setRoleToHost = async () => {
   if (rtcClient) await rtcClient.setClientRole("host");
 };
 
-export const subscribeVolume = (handler) => {
-  if (!rtcClient) return;
-  try {
-    rtcClient.enableAudioVolumeIndicator();
-    rtcClient.on("volume-indicator", handler);
-  } catch (e) {
-    console.warn("subscribeVolume error:", e);
-  }
-};
+// export const subscribeVolume = (handler) => {
+//   if (!rtcClient) return;
+//   try {
+//     rtcClient.enableAudioVolumeIndicator();
+//     rtcClient.on("volume-indicator", handler);
+//   } catch (e) {
+//     console.warn("subscribeVolume error:", e);
+//   }
+// };
 
 // ===== Helpers =====
 export const getRemoteUsers = () => Object.values(remoteUsers);
@@ -309,12 +394,20 @@ export const getRemoteUsers = () => Object.values(remoteUsers);
 export const removeRemoteUser = (uid) => {
   const id = String(uid);
   const ru = remoteUsers[id];
-  if (ru?.audioTrack) { try { ru.audioTrack.stop(); } catch(e) {
-          console.log(e)
-        } }
-  if (ru?.videoTrack) { try { ru.videoTrack.stop(); } catch(e) {
-          console.log(e)
-        } }
+  if (ru?.audioTrack) {
+    try {
+      ru.audioTrack.stop();
+    } catch (e) {
+      console.log(e);
+    }
+  }
+  if (ru?.videoTrack) {
+    try {
+      ru.videoTrack.stop();
+    } catch (e) {
+      console.log(e);
+    }
+  }
   delete remoteUsers[id];
   if (String(screenSharerUid) === id) {
     screenSharerUid = null;

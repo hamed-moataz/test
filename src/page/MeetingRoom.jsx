@@ -1,26 +1,15 @@
-import React, {
-  useState,
-  useCallback,
-  useEffect,
-  useRef,
-  useMemo,
-} from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   initRTCClient,
   joinRoom,
   leaveRoom,
-  // toggleMic,
-  toggleScreenShare,
   getRemoteUsers,
   localTracks,
   closeCameraTrack,
   createCameraTrack,
-  // muteUserLocally,
-  // stopUserVideoLocally,
-  subscribeVolume,
+  // subscribeVolume,
   getScreenSharer,
   subscribeScreenShare,
-  canStartScreenShare,
   onRemoteRosterChanged,
 } from "../services/agoraRTCService";
 
@@ -40,22 +29,34 @@ import {
 } from "../services/agoraRTMService";
 
 export default function MeetingRoom() {
-  const { data, loading, setMicActive, micActive } = useMeet();
+  const {
+    data,
+    loading,
+    setMicActive,
+    screenActive,
+    setScreenActive,
+    currentScreenSharer,
+    setCurrentScreenSharer,
+    localVideoTrack,
+    setLocalVideoTrack,
+    setRemoteUsers,
+    userDirectory,
+    setUserDirectory,
+    selfId,
+    members,
+    sortedMembers,
+    
+  } = useMeet();
   const baseUrl = import.meta.env.VITE_BASE_URL;
 
   const [joining, setJoining] = useState(false);
   const [joined, setJoined] = useState(false);
-  const [localVideoTrack, setLocalVideoTrack] = useState(null);
-  const [screenActive, setScreenActive] = useState(false);
-  const [remoteUsers, setRemoteUsers] = useState([]);
+
   const [messages, setMessages] = useState([]);
   const [chatVisible, setChatVisible] = useState(true);
   const [membersVisible, setMembersVisible] = useState(true);
-  const [currentScreenSharer, setCurrentScreenSharer] = useState(null);
   const [speakingUsers, setSpeakingUsers] = useState({});
-  const [userDirectory, setUserDirectory] = useState({});
   const speakingPrevRef = useRef({});
-
   const upsertUser = useCallback((u) => {
     if (!u?.id) return;
     const id = String(u.id);
@@ -71,13 +72,13 @@ export default function MeetingRoom() {
   const localVideoRef = useRef(null);
   const screenVideoRef = useRef(null);
 
-  const speakSoundRef = useRef(
-    typeof Audio !== "undefined"
-      ? new Audio(
-          "data:audio/wav;base64,UklGRhQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQgAAAABAQEBAP///wAAAP///w=="
-        )
-      : null
-  );
+  // const speakSoundRef = useRef(
+  //   typeof Audio !== "undefined"
+  //     ? new Audio(
+  //         "data:audio/wav;base64,UklGRhQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQgAAAABAQEBAP///wAAAP///w=="
+  //       )
+  //     : null
+  // );
 
   const updateMembers = useCallback(() => {
     const users = getRemoteUsers();
@@ -105,7 +106,6 @@ export default function MeetingRoom() {
       } catch (err) {
         console.warn("record-join error:", err);
       }
-
       // RTC join
       await joinRoom(APP_ID, channelName, userId, rtcToken, isHost);
 
@@ -137,35 +137,35 @@ export default function MeetingRoom() {
         }
       );
 
-      subscribeVolume((volumes) => {
-        const THRESHOLD = 8;
-        const nowSpeaking = {};
-        volumes.forEach((v) => {
-          const id = String(v.uid);
-          const lvl = typeof v.level === "number" ? v.level : 0;
-          const isSpeaking = lvl > THRESHOLD;
-          nowSpeaking[id] = isSpeaking;
+      // subscribeVolume((volumes) => {
+      //   const THRESHOLD = 8;
+      //   const nowSpeaking = {};
+      //   volumes.forEach((v) => {
+      //     const id = String(v.uid);
+      //     const lvl = typeof v.level === "number" ? v.level : 0;
+      //     const isSpeaking = lvl > THRESHOLD;
+      //     nowSpeaking[id] = isSpeaking;
 
-          const wasSpeaking = speakingPrevRef.current[id] || false;
-          if (!wasSpeaking && isSpeaking) {
-            try {
-              const a = speakSoundRef.current;
-              if (a) {
-                a.currentTime = 0;
-                a.play().catch(() => {});
-              }
-            } catch (e) {
-              console.log(e);
-            }
-          }
-        });
+      //     const wasSpeaking = speakingPrevRef.current[id] || false;
+      //     if (!wasSpeaking && isSpeaking) {
+      //       try {
+      //         const a = speakSoundRef.current;
+      //         if (a) {
+      //           a.currentTime = 0;
+      //           a.play().catch(() => {});
+      //         }
+      //       } catch (e) {
+      //         console.log(e);
+      //       }
+      //     }
+      //   });
 
-        setSpeakingUsers((prev) => ({ ...prev, ...nowSpeaking }));
-        speakingPrevRef.current = {
-          ...speakingPrevRef.current,
-          ...nowSpeaking,
-        };
-      });
+      //   setSpeakingUsers((prev) => ({ ...prev, ...nowSpeaking }));
+      //   speakingPrevRef.current = {
+      //     ...speakingPrevRef.current,
+      //     ...nowSpeaking,
+      //   };
+      // });
 
       setJoined(true);
       setMessages((m) => [
@@ -233,17 +233,12 @@ export default function MeetingRoom() {
       localVideoTrack.play(localVideoRef.current);
     }
     return () => {
-      if (localVideoTrack) localVideoTrack.stop();
+      if (localVideoTrack) {
+        localVideoTrack.stop();
+        localVideoTrack.close();
+      }
     };
   }, [localVideoTrack]);
-
-  const handleToggleScreen = useCallback(async () => {
-    const active = await toggleScreenShare();
-    setScreenActive(active);
-    setCurrentScreenSharer(
-      active ? (data?.user_uuid ? String(data.user_uuid) : "local") : null
-    );
-  }, [data?.user_uuid]);
 
   useEffect(() => {
     initRTCClient(updateMembers, updateMembers);
@@ -262,44 +257,6 @@ export default function MeetingRoom() {
     };
   }, [screenActive]);
 
-  const selfId = String(data?.user_uuid || "");
-
-  const members = useMemo(
-    () => [
-      {
-        id: selfId,
-        name: data?.user_name,
-        host: data?.host,
-        audio: !!localTracks.audioTrack,
-        video: !!localVideoTrack,
-      },
-      ...remoteUsers.map((u) => {
-        const id = String(u.uid);
-        const entry = userDirectory[id];
-        return {
-          id,
-          name: entry?.name || u.user_name || u.name || id,
-          host: !!entry?.host,
-          audio: !!u.audioTrack,
-          video: !!u.videoTrack,
-        };
-      }),
-    ],
-    [
-      selfId,
-      data?.user_name,
-      data?.host,
-      remoteUsers,
-      userDirectory,
-      localVideoTrack,
-    ]
-  );
-
-  const sortedMembers = useMemo(
-    () =>
-      [...members].sort((a, b) => (a.host === b.host ? 0 : a.host ? -1 : 1)),
-    [members]
-  );
   const anyScreenActive = !!currentScreenSharer || screenActive;
 
   useEffect(() => {
@@ -350,11 +307,10 @@ export default function MeetingRoom() {
                 currentUserId={selfId}
               />
             )}
-
             <div className="flex flex-col max-h-[70vh] w-full relative mx-auto overflow-y-auto">
               <VideoGrid joined={joined} fullBleed={anyScreenActive}>
                 {anyScreenActive ? (
-                  <div className="relative w-full h-full bg-black rounded-lg overflow-x-hidden 0">
+                  <div className="relative w-full h-full bg-black rounded-lg overflow-hidden">
                     {screenActive ? (
                       <div ref={screenVideoRef} className="absolute inset-0" />
                     ) : currentScreenSharer ? (
@@ -363,11 +319,20 @@ export default function MeetingRoom() {
                         className="absolute inset-0"
                       />
                     ) : null}
+
+                    {localVideoTrack && (
+                      <div className="absolute bottom-4 right-4 w-40 h-28 rounded-lg overflow-hidden border-2 border-white shadow-lg">
+                        <div
+                          ref={localVideoRef}
+                          className="w-full h-full"
+                        ></div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <>
                     {joined && localVideoTrack && (
-                      <div className="w-[150px] h-[150px] bg-black rounded-full overflow-x-hidden overflow-y-auto mx-auto">
+                      <div className="w-[150px] h-[150px] bg-black rounded-full overflow-hidden mx-auto">
                         <div
                           ref={localVideoRef}
                           className="w-full h-full"
@@ -387,12 +352,13 @@ export default function MeetingRoom() {
                           className="flex flex-wrap justify-center"
                         >
                           <div
-                            className={`w-[150px] h-[150px]  bg-sky-500 rounded-xl  ${speakingClass}`}
+                            className={`w-[150px] h-[150px] bg-sky-500 rounded-full ${speakingClass}`}
                           >
                             <div
                               id={`player-${user.id}`}
-                              className="w-full h-full text-center flex justify-center items-center"
+                              className="w-full h-full flex justify-center items-center"
                             >
+
                               <span className="text-white">{user.name}</span>
                             </div>
                           </div>
@@ -441,28 +407,14 @@ export default function MeetingRoom() {
             console.error(e);
           }
         }}
-        onToggleScreen={async () => {
-          if (!joined) return;
-          if (!canStartScreenShare(selfId)) {
-            console.warn("Another user is already sharing the screen.");
-            return;
-          }
-          try {
-            await handleToggleScreen();
-          } catch (e) {
-            console.error(e);
-          }
-        }}
         onToggleChat={() => setChatVisible((v) => !v)}
         onToggleMembers={() => setMembersVisible((v) => !v)}
-        micActive={micActive}
         camActive={!!localVideoTrack}
         screenActive={screenActive}
         chatVisible={chatVisible}
         membersVisible={membersVisible}
         camDisabled={!joined || joining}
         screenDisabled={!joined || joining}
-        members={members}
       />
     </div>
   );
