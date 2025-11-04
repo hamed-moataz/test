@@ -32,8 +32,11 @@ export const onRemoteRosterChanged = (cb) => {
 
 // ===== Screen Share APIs =====
 export const getScreenSharer = () => screenSharerUid;
-export const canStartScreenShare = (selfId) =>
-  !screenSharerUid || String(screenSharerUid) === String(selfId);
+export const canStartScreenShare = (selfId) => {
+  const isSharer = String(screenSharerUid) === String(selfId);
+  const isAvailable = screenSharerUid === null;
+  return isAvailable || isSharer;
+};
 
 export const subscribeScreenShare = (cb) => {
   if (typeof cb === "function") screenShareListeners.add(cb);
@@ -61,31 +64,30 @@ export const initRTCClient = (onUserJoined, onUserLeft) => {
     const uid = String(user.uid);
     remoteUsers[uid] = remoteUsers[uid] || { uid };
 
-    // detect screen share
-    let isScreen = mediaType === "screen";
-    if (mediaType === "video" && user.videoTrack) {
-      user.videoTrack.play();
-      remoteUsers[uid].videoTrack = user.videoTrack;
-      remoteUsers[uid].video = true;
-    }
+    if (mediaType === "video" || mediaType === "screen") {
+      if (user.screenTrack) {
+        screenSharerUid = uid; 
+        
 
-    if (isScreen && user.screenTrack) {
-      screenSharerUid = uid;
-      remoteUsers[uid].screen = true;
-      notifyScreenShareChange();
-      const tryPlay = () => {
-        const el =
-          document.getElementById(`player-screen-${uid}`) ||
-          document.getElementById(`player-${uid}`);
-        if (el) user.screenTrack.play(el);
-        else setTimeout(tryPlay, 80);
-      };
-      tryPlay();
-      remoteUsers[uid].videoTrack = user.screenTrack;
-    } else if (mediaType === "video" && user.videoTrack) {
-      const camEl = document.getElementById(`player-${uid}`);
-      if (camEl) user.videoTrack.play(camEl);
-      remoteUsers[uid].videoTrack = user.videoTrack;
+        remoteUsers[uid].screen = true;
+        notifyScreenShareChange();
+        const tryPlay = () => {
+          const el =
+            document.getElementById(`player-screen-${uid}`) ||
+            document.getElementById(`player-${uid}`);
+          if (el) user.screenTrack.play(el);
+          else setTimeout(tryPlay, 80);
+        };
+        tryPlay();
+        remoteUsers[uid].videoTrack = user.screenTrack;
+      }
+
+      else if (user.videoTrack) {
+        const camEl = document.getElementById(`player-${uid}`);
+        if (camEl) user.videoTrack.play(camEl);
+        remoteUsers[uid].videoTrack = user.videoTrack;
+        remoteUsers[uid].video = true;
+      }
     }
 
     if (mediaType === "audio" && user.audioTrack) {
@@ -101,29 +103,32 @@ export const initRTCClient = (onUserJoined, onUserLeft) => {
   rtcClient.on("user-unpublished", (user, mediaType) => {
     const uid = String(user.uid);
     const ru = remoteUsers[uid];
-
-    if (ru) {
-      if (mediaType === "audio" && ru.audioTrack) {
-        try {
-          ru.audioTrack.stop();
-        } catch (e) {
-          console.log(e);
+    if (user)
+      if (ru) {
+        if (mediaType === "audio" && ru.audioTrack) {
+          try {
+            ru.audioTrack.stop();
+          } catch (e) {
+            console.log(e);
+          }
+          ru.audioTrack = null;
+          ru.audio = false;
         }
-        ru.audioTrack = null;
-        ru.audio = false;
+        if (
+          (mediaType === "video" || mediaType === "screen") &&
+          ru.videoTrack
+        ) {
+          try {
+            ru.videoTrack.stop();
+          } catch (e) {
+            console.log(e);
+          }
+          ru.videoTrack = null;
+          if (mediaType === "screen") {
+            ru.screen = false;
+          }
+        }
       }
-      if ((mediaType === "video" || mediaType === "screen") && ru.videoTrack) {
-        try {
-          ru.videoTrack.stop();
-        } catch (e) {
-          console.log(e);
-        }
-        ru.videoTrack = null;
-        if (mediaType === "screen") {
-          ru.screen = false;
-        }
-      }
-    }
 
     if (String(screenSharerUid) === uid) {
       screenSharerUid = null;
@@ -330,12 +335,12 @@ export const toggleScreenShare = async () => {
   }
   if (!localTracks.screenTrack) {
     localTracks.screenTrack = await AgoraRTC.createScreenVideoTrack(
-      { encoderConfig: "720p", optimizationMode: "detail" },
+      { encoderConfig: "1080p", optimizationMode: "detail" },
       "auto"
     );
     await rtcClient.publish([localTracks.screenTrack]);
 
-    screenSharerUid = String(rtcClient.uid);
+    // screenSharerUid = String(rtcClient.uid);
     notifyScreenShareChange();
     rosterChangedCb?.();
     return true;

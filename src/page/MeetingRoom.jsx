@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   initRTCClient,
   joinRoom,
@@ -45,7 +45,6 @@ export default function MeetingRoom() {
     selfId,
     members,
     sortedMembers,
-    
   } = useMeet();
   const baseUrl = import.meta.env.VITE_BASE_URL;
 
@@ -68,6 +67,7 @@ export default function MeetingRoom() {
 
   const params = new URLSearchParams(window.location.search);
   const t = params.get("payload");
+  // const userId = String(data?.user_uuid);
 
   const localVideoRef = useRef(null);
   const screenVideoRef = useRef(null);
@@ -95,6 +95,7 @@ export default function MeetingRoom() {
 
     try {
       setJoining(true);
+
       try {
         const res = await fetch(`${baseUrl}/api/agora/record-join`, {
           method: "POST",
@@ -106,11 +107,12 @@ export default function MeetingRoom() {
       } catch (err) {
         console.warn("record-join error:", err);
       }
+
       // RTC join
       await joinRoom(APP_ID, channelName, userId, rtcToken, isHost);
 
       // RTM
-      await initRTM(APP_ID, userId, rtmToken, {
+      await initRTM(APP_ID, userId, rtmToken, handleLeave, {
         name: data?.user_name,
         host: isHost,
       });
@@ -168,10 +170,17 @@ export default function MeetingRoom() {
       // });
 
       setJoined(true);
-      setMessages((m) => [
-        ...m,
-        { system: true, name: "Root Bot", text: "🎉wellcome to room" },
-      ]);
+      setMessages((m) => {
+        const welcomeText = "🎉wellcome to room";
+        const isWelcomeMessageAlreadyPresent = m.some(
+          (msg) => msg.text === welcomeText && msg.system === true
+        );
+        if (isWelcomeMessageAlreadyPresent) {
+          return m;
+        } else {
+          return [...m, { system: true, name: "Root Bot", text: welcomeText }];
+        }
+      });
     } catch (e) {
       console.error("Join failed:", e);
     } finally {
@@ -191,7 +200,7 @@ export default function MeetingRoom() {
     } catch (err) {
       console.warn("record-end error:", err);
     }
-
+    console.log("Executing full leave process due to remote login...");
     await leaveRTM().catch(() => {});
     await leaveRoom();
 
@@ -203,10 +212,7 @@ export default function MeetingRoom() {
     setSpeakingUsers({});
     speakingPrevRef.current = {};
 
-    setMessages((m) => [
-      ...m,
-      { system: true, name: "Mumble Bot", text: "👋 You left the room" },
-    ]);
+    setMessages((m) => [...m]);
   }, [t]);
 
   // Toggle Camera
@@ -281,7 +287,7 @@ export default function MeetingRoom() {
   }
 
   return (
-    <div className="bg-[var(--color-primary)] h-auto  sm:h-screen text-white ">
+    <div className="bg-[var(--color-primary)] h-auto  lg:h-screen text-white ">
       <Header />
 
       {!joined ? (
@@ -292,12 +298,12 @@ export default function MeetingRoom() {
             className={`grid  gap-4 transition-all duration-300 place-content-center w-full mx-auto
             ${
               membersVisible && chatVisible
-                ? "md:grid-cols-[250px_1fr_260px]"
+                ? "lg:grid-cols-[250px_1fr_260px]"
                 : membersVisible
-                ? "md:grid-cols-[250px_1fr]"
+                ? "lg:grid-cols-[250px_1fr]"
                 : chatVisible
-                ? "md:grid-cols-[1fr_300px] "
-                : "md:grid-cols-1"
+                ? "lg:grid-cols-[1fr_300px] "
+                : "lg:grid-cols-1"
             }`}
           >
             {membersVisible && (
@@ -307,7 +313,7 @@ export default function MeetingRoom() {
                 currentUserId={selfId}
               />
             )}
-            <div className="flex flex-col max-h-[70vh] w-full relative mx-auto overflow-y-auto">
+            <div className="flex flex-col max-h-[70vh] w-full  relative mx-auto overflow-y-auto">
               <VideoGrid joined={joined} fullBleed={anyScreenActive}>
                 {anyScreenActive ? (
                   <div className="relative w-full h-full bg-black rounded-lg overflow-hidden">
@@ -352,14 +358,15 @@ export default function MeetingRoom() {
                           className="flex flex-wrap justify-center"
                         >
                           <div
-                            className={`w-[150px] h-[150px] bg-sky-500 rounded-full ${speakingClass}`}
+                            className={`w-[160px] h-[160px] bg-sky-500 rounded-full ${speakingClass}`}
                           >
                             <div
                               id={`player-${user.id}`}
-                              className="w-full h-full flex justify-center items-center"
+                              className="w-full h-full flex justify-center items-center overflow-hidden px-2 text-center"
                             >
-
-                              <span className="text-white">{user.name}</span>
+                              <span className="text-white w-full mx-auto text-center">
+                                {user.name}
+                              </span>
                             </div>
                           </div>
                         </div>

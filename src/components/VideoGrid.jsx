@@ -6,7 +6,7 @@ export default function VideoGrid({ joined, children, fullBleed  }) {
     <div className="flex flex-col gap-4 w-full h-screen">
       <div
         ref={containerRef}
-        className={`bg-gray-800 rounded-lg h-full text-gray-400 ${
+        className={`bg-gray-800 rounded-lg h-full text-gray-400 w-[380px] mx-auto sm:w-full ${
           fullBleed
             ? "flex items-stretch justify-stretch p-0"   
             : "flex items-center justify-center p-3"     

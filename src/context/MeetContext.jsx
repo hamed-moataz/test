@@ -1,4 +1,4 @@
-import React, {
+import {
   createContext,
   useCallback,
   useContext,
@@ -20,6 +20,7 @@ import {
 } from "../services/agoraRTCService";
 import Pusher from "pusher-js";
 import sound from "../assets/happy-message-ping-351298.mp3";
+import { leaveRTM } from "../services/agoraRTMService";
 
 const MeetContext = createContext();
 
@@ -82,7 +83,6 @@ export const MeetProvider = ({ children }) => {
     const active = await toggleMic();
     setMicActive(active);
   }, []);
-
   const handleToggleScreen = useCallback(async () => {
     const active = await toggleScreenShare();
     const sharerId = active
@@ -93,7 +93,6 @@ export const MeetProvider = ({ children }) => {
 
     setScreenActive(active);
     setCurrentScreenSharer(sharerId);
-
     setScreenSharerId(sharerId);
   }, [data?.user_uuid]);
 
@@ -258,6 +257,38 @@ export const MeetProvider = ({ children }) => {
       console.log("Error lowering hand:", error);
     }
   };
+
+  const startRecord = async () => {
+    try {
+      const res = await fetch(`${baseUrl}/api/agora/start/recording`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ payload: t }),
+      });
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+      console.log(data , 'from api started')
+      return data;
+    } catch (error) {
+      console.log("Error lowering hand:", error);
+    }
+  };
+  const endRecord = async () => {
+    try {
+      const res = await fetch(`${baseUrl}/api/agora/end/recording`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ payload: t }),
+      });
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+      console.log(data , 'from api end')
+      return data;
+    } catch (error) {
+      console.log("Error lowering hand:", error);
+    }
+  };
+
   const handleToggleHand = useCallback(async () => {
     if (hasRaised) {
       await lowerHand();
@@ -320,8 +351,6 @@ export const MeetProvider = ({ children }) => {
           hasLecture && hasUser && (isHost === true || isHost === false);
         setAuthorized(isValid);
         setData(payloadData);
-   
-        
       } catch (err) {
         console.error("Verification error:", err);
         setAuthorized(false);
@@ -394,6 +423,7 @@ export const MeetProvider = ({ children }) => {
         try {
           await leaveRoom();
         } finally {
+          await leaveRTM();
           setMicActive(false);
           setShowLoadingGate(true);
         }
@@ -403,8 +433,13 @@ export const MeetProvider = ({ children }) => {
     bind(`agora.users.all.${lectureId}`, "session.ended", async () => {
       if (endedOnceRef.current) return;
       endedOnceRef.current = true;
-      await leaveRoom();
-      setShowLoadingGate(true);
+      try {
+        await leaveRoom();
+      } finally {
+        await leaveRTM();
+        setMicActive(false);
+        setShowLoadingGate(true);
+      }
     });
 
     bind("students.actions", `student.student.raise.hand`, (payload) => {
@@ -448,7 +483,6 @@ export const MeetProvider = ({ children }) => {
       `users.start.stream`,
 
       async (payload) => {
-        console.log(payload.user, "pay streem");
         try {
           const evt =
             typeof payload === "string" ? JSON.parse(payload) : payload;
@@ -464,7 +498,23 @@ export const MeetProvider = ({ children }) => {
         }
       }
     );
+    bind(
+      `lecture.${lectureId}.start.recording`,
+      `recording.started`,
 
+      async (payload) => {
+        console.log(payload, "from start pusher");
+      }
+    );
+
+      bind(
+      `lecture.${lectureId}.start.recording`,
+      `recording.ended`,
+
+      async (payload) => {
+        console.log(payload, "from end pusher");
+      }
+    );
     return () => {
       try {
         subsRef.current.forEach(({ channelName, event, handler }) => {
@@ -481,18 +531,16 @@ export const MeetProvider = ({ children }) => {
     };
   }, [APP_KEY, CLUSTER, userId, lectureId]);
   useEffect(() => {
-    // if (typeof subscribeScreenShare !== "function") return;
-
     const unsubscribe = subscribeScreenShare((newSharerId) => {
       setScreenSharerId(newSharerId);
     });
 
     return () => unsubscribe();
   }, []);
+
   if (showLoadingGate) {
     window.location.reload();
   }
-
   return (
     <MeetContext.Provider
       value={{
@@ -530,6 +578,8 @@ export const MeetProvider = ({ children }) => {
         selfId,
         members,
         sortedMembers,
+        startRecord,
+        endRecord
       }}
     >
       {children}

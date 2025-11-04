@@ -17,11 +17,14 @@ export default function MembersList({
     sortedMembers,
     micActive,
     screenActive,
+    startRecord,
+    endRecord
   } = useMeet();
+
   return (
     <aside
       id="members__container"
-      className="bg-[#262625] w-full md:w-64 rounded-lg p-3 flex flex-col h-[70vh]"
+      className="bg-[#262625] w-full lg:w-64 rounded-lg p-3 flex flex-col h-[70vh]"
     >
       <div
         id="members__header"
@@ -53,6 +56,30 @@ export default function MembersList({
             title="End meeting for everyone"
           >
             End Meeting
+          </button>
+        </div>
+      )}
+      {isCurrentUserHost && (
+        <div
+          id="host__controls"
+          className="flex items-center gap-2 pb-2 mb-2 border-b border-gray-700"
+        >
+          <button
+            type="button"
+            onClick={startRecord}
+            className="px-2 py-1 rounded-md bg-green-600 text-white text-sm hover:opacity-90"
+            title="Mute all microphones"
+          >
+            Start Record
+          </button>
+
+          <button
+            type="button"
+            onClick={endRecord}
+            className="ml-auto px-2 py-1 rounded-md bg-red-600 text-white text-sm hover:opacity-90"
+            title="End meeting for everyone"
+          >
+            End Record
           </button>
         </div>
       )}

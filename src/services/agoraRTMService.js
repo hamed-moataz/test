@@ -17,9 +17,17 @@ const ensureChannel = () => {
   if (!rtmChannel) throw new Error("RTM channel not joined");
 };
 
-export const initRTM = async (appId, uid, rtmToken, { name, host } = {}) => {
+export const initRTM = async (appId, uid, rtmToken ,onKicked, { name, host } = {}) => {
   selfUid = String(uid);
   rtmClient = AgoraRTM.createInstance(appId);
+
+  rtmClient.on("ConnectionStateChanged", (newState, reason) => {
+    console.log("RTM Connection state changed:", newState, "reason:", reason);
+    
+    if (reason === "REMOTE_LOGIN" || reason === "LOGIN_ABORTED") {
+      onKicked?.(); 
+    }
+  });
   await rtmClient.login({ uid: selfUid, token: rtmToken });
   rtmLoggedIn = true;
 
@@ -60,9 +68,7 @@ export const sendKickUser = async (userIdToKick) => {
   await rtmClient.sendMessageToPeer({ text: JSON.stringify(payload) }, target);
 };
 
-export const sendMuteAll = async () => sendRTMControl({ type: "mute-all" });
-export const sendUnmuteAll = async () => sendRTMControl({ type: "unmute-all" });
-export const sendEndMeeting = async () => sendRTMControl({ type: "end-meeting" });
+
 
 export const joinRTMChannel = async (
   channelName,

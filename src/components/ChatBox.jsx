@@ -12,7 +12,7 @@ export default function ChatBox({ messages, onSend }) {
   return (
     <section
       id="messages__container"
-      className="bg-[#262625] w-full md:w-64 rounded-lg p-4 flex flex-col  h-[70vh] "
+      className="bg-[#262625] w-full lg:w-64 rounded-lg p-4 flex flex-col  h-[70vh] "
     >
       <div
         id="messages"

@@ -1,6 +1,13 @@
 import React, { useMemo } from "react";
 import { useMeet } from "../context/MeetContext";
-import { Camera, LogOut, MessageCircleMore, Mic, MonitorUp, UserRound } from "lucide-react";
+import {
+  Camera,
+  LogOut,
+  MessageCircleMore,
+  Mic,
+  MonitorUp,
+  UserRound,
+} from "lucide-react";
 
 export default function Controls({
   joined,
@@ -10,7 +17,7 @@ export default function Controls({
   onToggleChat,
   onToggleMembers,
   camActive = false,
-  screenActive = false,
+  // screenActive = false,
   chatVisible = false,
   membersVisible = false,
 
@@ -18,7 +25,22 @@ export default function Controls({
   camDisabled,
   screenDisabled,
 }) {
-  const { micActive, hasRaised, handleToggleMic, handleToggleHand ,handleToggleScreen} = useMeet();
+  const {
+    micActive,
+    hasRaised,
+    handleToggleMic,
+    handleToggleHand,
+    handleToggleScreen,
+    screenActive,
+    sortedMembers,
+    data
+  } = useMeet();
+  const sharingMember = sortedMembers.find((m) => m.video === true);
+
+  const isCurrentUserSharing = sharingMember?.id === data?.user_uuid;
+
+  const isSomeoneElseSharing = sharingMember && !isCurrentUserSharing;
+
   const computedMicDisabled = useMemo(
     () => (typeof micDisabled === "boolean" ? micDisabled : !joined),
     [micDisabled, joined]
@@ -48,7 +70,7 @@ export default function Controls({
               onClick={safe(onToggleCamera, computedCamDisabled)}
               disabled={computedCamDisabled}
               title={computedCamDisabled ? "Join first to use camera" : ""}
-              className={`relative p-3 rounded-md ${
+              className={`relative p-1  sm:p-2 md:p-3 rounded-md ${
                 camActive
                   ? "bg-[var(--color-secondary)]"
                   : "bg-[var(--color-accent)]"
@@ -72,7 +94,7 @@ export default function Controls({
               onClick={safe(handleToggleMic, computedMicDisabled)}
               disabled={computedMicDisabled}
               title={computedMicDisabled ? "Join first to use microphone" : ""}
-              className={`relative p-3 rounded-md ${
+              className={`relative p-1  sm:p-2 md:p-3 rounded-md ${
                 micActive
                   ? "bg-[var(--color-secondary)]"
                   : "bg-[var(--color-accent)]"
@@ -91,30 +113,38 @@ export default function Controls({
             </button>
 
             {/* Screen Share */}
-            <button
-              id="screen-btn"
-              onClick={safe(handleToggleScreen, computedScreenDisabled)}
-              disabled={computedScreenDisabled}
-              title={computedScreenDisabled ? "Join first to share screen" : ""}
-              className={`p-3 rounded-md ${
-                screenActive
-                  ? "bg-[var(--color-secondary)]"
-                  : "bg-[var(--color-accent)]"
-              } text-white ${
-                computedScreenDisabled
-                  ? "opacity-50 cursor-not-allowed"
-                  : "hover:opacity-90"
-              }`}
-              aria-pressed={screenActive}
-              aria-disabled={computedScreenDisabled}
-            >
-              <MonitorUp />
-            </button>
+            {!isSomeoneElseSharing && (
+              <button
+                id="screen-btn"
+                onClick={safe(handleToggleScreen, computedScreenDisabled)}
+                disabled={computedScreenDisabled}
+                title={
+                  computedScreenDisabled
+                    ? "Join first to share screen"
+                    : isCurrentUserSharing
+                    ? "Click to stop sharing"
+                    : "Click to start screen sharing"
+                }
+                className={`p-1  sm:p-2 md:p-3 rounded-md ${
+                  screenActive
+                    ? "bg-[var(--color-secondary)]"
+                    : "bg-[var(--color-accent)]"
+                } text-white ${
+                  computedScreenDisabled
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:opacity-90"
+                }`}
+                aria-pressed={screenActive}
+                aria-disabled={computedScreenDisabled}
+              >
+                <MonitorUp />
+              </button>
+            )}
 
             {/* Raise Hand */}
             <button
               onClick={handleToggleHand}
-              className={`p-3 rounded-md transition-all duration-300 ${
+              className={`p-1  sm:p-2 md:p-3 rounded-md transition-all duration-300 ${
                 hasRaised
                   ? "bg-[var(--color-secondary)] text-white"
                   : "bg-[var(--color-accent)] text-gray-200 hover:opacity-90"
@@ -128,7 +158,7 @@ export default function Controls({
             {/* Chat toggle */}
             <button
               onClick={onToggleChat}
-              className={`p-3 rounded-md ${
+              className={`p-1  sm:p-2 md:p-3 rounded-md ${
                 chatVisible
                   ? "bg-[var(--color-secondary)]"
                   : "bg-[var(--color-accent)]"
@@ -142,9 +172,9 @@ export default function Controls({
             {/* Members toggle */}
             <button
               onClick={onToggleMembers}
-              className={`p-3 rounded-md ${
+              className={`p-1  sm:p-2 md:p-3 rounded-md ${
                 membersVisible
-                  ? "bg-[var(--color-secondary)]"
+                  ? "bg-[var(--color-secondary)] "
                   : "bg-[var(--color-accent)]"
               } text-white hover:opacity-90`}
               aria-pressed={membersVisible}
@@ -157,10 +187,10 @@ export default function Controls({
             <button
               id="leave-btn"
               onClick={onLeave}
-              className="p-3 rounded-md bg-[#FF5050] text-white hover:opacity-90"
+              className="p-1  sm:p-2 md:p-3 rounded-md bg-[#FF5050] text-white hover:opacity-90"
               title="Leave"
             >
-             <LogOut />
+              <LogOut />
             </button>
           </>
         )}
