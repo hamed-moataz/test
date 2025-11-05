@@ -1,5 +1,5 @@
 import { useMeet } from "../context/MeetContext";
-import { Hand, Mic, Trash, MonitorUp } from "lucide-react";
+import { Hand, Mic, Trash, MonitorUp, Play, SquareStop, LogOut } from "lucide-react";
 
 export default function MembersList({
   isCurrentUserHost = false,
@@ -18,7 +18,8 @@ export default function MembersList({
     micActive,
     screenActive,
     startRecord,
-    endRecord
+    endRecord,
+    isRecording,
   } = useMeet();
 
   return (
@@ -38,7 +39,7 @@ export default function MembersList({
       {isCurrentUserHost && (
         <div
           id="host__controls"
-          className="flex items-center gap-2 pb-2 mb-2 border-b border-gray-700"
+          className="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-gray-700"
         >
           <button
             type="button"
@@ -49,40 +50,47 @@ export default function MembersList({
             Mute All
           </button>
 
-          <button
-            type="button"
-            onClick={endForAll}
-            className="ml-auto px-2 py-1 rounded-md bg-gray-700 text-white text-sm hover:opacity-90"
-            title="End meeting for everyone"
-          >
-            End Meeting
-          </button>
-        </div>
-      )}
-      {isCurrentUserHost && (
-        <div
-          id="host__controls"
-          className="flex items-center gap-2 pb-2 mb-2 border-b border-gray-700"
-        >
-          <button
+         
+           <button
             type="button"
             onClick={startRecord}
-            className="px-2 py-1 rounded-md bg-green-600 text-white text-sm hover:opacity-90"
-            title="Mute all microphones"
+            disabled={isRecording}
+            className={`p-1 rounded-md text-white text-sm ${
+              isRecording
+                ? "bg-gray-700 cursor-not-allowed"
+                : "bg-green-600 hover:opacity-90"
+            }`}
+            title="Start recording"
           >
-            Start Record
+            {/* Start Record */}
+            <Play size={20} />
           </button>
 
           <button
             type="button"
             onClick={endRecord}
-            className="ml-auto px-2 py-1 rounded-md bg-red-600 text-white text-sm hover:opacity-90"
+            disabled={!isRecording}
+            className={`p-1 rounded-md text-white text-sm ${
+              !isRecording
+                ? "bg-gray-700 cursor-not-allowed"
+                : "bg-red-600 hover:opacity-90"
+            }`}
+            title="End recording"
+          >
+            <SquareStop size={20} />
+          </button>
+
+           <button
+            type="button"
+            onClick={endForAll}
+            className=" p-1 rounded-md bg-red-600 text-white text-sm hover:opacity-90"
             title="End meeting for everyone"
           >
-            End Record
+            <LogOut size={20} />
           </button>
         </div>
       )}
+   
 
       <div
         id="member__list"

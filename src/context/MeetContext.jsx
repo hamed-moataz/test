@@ -43,6 +43,8 @@ export const MeetProvider = ({ children }) => {
   const [currentScreenSharer, setCurrentScreenSharer] = useState(null);
   const [screenSharerId, setScreenSharerId] = useState(getScreenSharer());
 
+  const [isRecording, setIsRecording] = useState(false);
+
   const handSoundRef = useRef(
     typeof Audio !== "undefined" ? new Audio(sound) : null
   );
@@ -57,7 +59,10 @@ export const MeetProvider = ({ children }) => {
       console.log(e);
     }
   };
-
+  const playSound = (soundPath) => {
+    const audio = new Audio(soundPath);
+    audio.play().catch((err) => console.log("Audio play error:", err));
+  };
   const params = new URLSearchParams(window.location.search);
   const t = params.get("payload");
 
@@ -158,6 +163,8 @@ export const MeetProvider = ({ children }) => {
 
   const muteAll = async () => {
     try {
+      setMicActive(false);
+
       const res = await fetch(`${baseUrl}/api/agora/mute/all/users`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -199,7 +206,6 @@ export const MeetProvider = ({ children }) => {
   };
 
   const riseHand = async () => {
-    playHandSound();
     setHasRaised(true);
     setRaisedHands((prev) => new Set(prev).add(userId));
     try {
@@ -260,6 +266,7 @@ export const MeetProvider = ({ children }) => {
 
   const startRecord = async () => {
     try {
+      setIsRecording(true);
       const res = await fetch(`${baseUrl}/api/agora/start/recording`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -267,14 +274,16 @@ export const MeetProvider = ({ children }) => {
       });
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      console.log(data , 'from api started')
+      console.log(data, "from api started");
       return data;
     } catch (error) {
       console.log("Error lowering hand:", error);
+      setIsRecording(false);
     }
   };
   const endRecord = async () => {
     try {
+      setIsRecording(false);
       const res = await fetch(`${baseUrl}/api/agora/end/recording`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -282,10 +291,11 @@ export const MeetProvider = ({ children }) => {
       });
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      console.log(data , 'from api end')
+      console.log(data, "from api end");
       return data;
     } catch (error) {
       console.log("Error lowering hand:", error);
+      setIsRecording(false);
     }
   };
 
@@ -504,15 +514,19 @@ export const MeetProvider = ({ children }) => {
 
       async (payload) => {
         console.log(payload, "from start pusher");
+        setIsRecording(true);
+        playSound("/src/assets/start.mp3");
       }
     );
 
-      bind(
+    bind(
       `lecture.${lectureId}.start.recording`,
       `recording.ended`,
 
       async (payload) => {
         console.log(payload, "from end pusher");
+        setIsRecording(false);
+        playSound("/src/assets/end.mp3");
       }
     );
     return () => {
@@ -579,7 +593,8 @@ export const MeetProvider = ({ children }) => {
         members,
         sortedMembers,
         startRecord,
-        endRecord
+        endRecord,
+        isRecording,
       }}
     >
       {children}

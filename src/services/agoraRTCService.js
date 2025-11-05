@@ -340,7 +340,6 @@ export const toggleScreenShare = async () => {
     );
     await rtcClient.publish([localTracks.screenTrack]);
 
-    // screenSharerUid = String(rtcClient.uid);
     notifyScreenShareChange();
     rosterChangedCb?.();
     return true;

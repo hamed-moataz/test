@@ -7,7 +7,6 @@ import {
   localTracks,
   closeCameraTrack,
   createCameraTrack,
-  // subscribeVolume,
   getScreenSharer,
   subscribeScreenShare,
   onRemoteRosterChanged,
@@ -67,18 +66,11 @@ export default function MeetingRoom() {
 
   const params = new URLSearchParams(window.location.search);
   const t = params.get("payload");
-  // const userId = String(data?.user_uuid);
 
   const localVideoRef = useRef(null);
   const screenVideoRef = useRef(null);
 
-  // const speakSoundRef = useRef(
-  //   typeof Audio !== "undefined"
-  //     ? new Audio(
-  //         "data:audio/wav;base64,UklGRhQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQgAAAABAQEBAP///wAAAP///w=="
-  //       )
-  //     : null
-  // );
+ 
 
   const updateMembers = useCallback(() => {
     const users = getRemoteUsers();
@@ -138,36 +130,6 @@ export default function MeetingRoom() {
           if (id) upsertUser({ id, name, host });
         }
       );
-
-      // subscribeVolume((volumes) => {
-      //   const THRESHOLD = 8;
-      //   const nowSpeaking = {};
-      //   volumes.forEach((v) => {
-      //     const id = String(v.uid);
-      //     const lvl = typeof v.level === "number" ? v.level : 0;
-      //     const isSpeaking = lvl > THRESHOLD;
-      //     nowSpeaking[id] = isSpeaking;
-
-      //     const wasSpeaking = speakingPrevRef.current[id] || false;
-      //     if (!wasSpeaking && isSpeaking) {
-      //       try {
-      //         const a = speakSoundRef.current;
-      //         if (a) {
-      //           a.currentTime = 0;
-      //           a.play().catch(() => {});
-      //         }
-      //       } catch (e) {
-      //         console.log(e);
-      //       }
-      //     }
-      //   });
-
-      //   setSpeakingUsers((prev) => ({ ...prev, ...nowSpeaking }));
-      //   speakingPrevRef.current = {
-      //     ...speakingPrevRef.current,
-      //     ...nowSpeaking,
-      //   };
-      // });
 
       setJoined(true);
       setMessages((m) => {

@@ -13,14 +13,11 @@ export default function Controls({
   joined,
   onLeave,
   onToggleCamera,
-  // onToggleScreen,
   onToggleChat,
   onToggleMembers,
   camActive = false,
-  // screenActive = false,
   chatVisible = false,
   membersVisible = false,
-
   micDisabled,
   camDisabled,
   screenDisabled,
@@ -33,7 +30,7 @@ export default function Controls({
     handleToggleScreen,
     screenActive,
     sortedMembers,
-    data
+    data,
   } = useMeet();
   const sharingMember = sortedMembers.find((m) => m.video === true);
 
@@ -65,28 +62,30 @@ export default function Controls({
         {joined && (
           <>
             {/* Camera */}
-            <button
-              id="camera-btn"
-              onClick={safe(onToggleCamera, computedCamDisabled)}
-              disabled={computedCamDisabled}
-              title={computedCamDisabled ? "Join first to use camera" : ""}
-              className={`relative p-1  sm:p-2 md:p-3 rounded-md ${
-                camActive
-                  ? "bg-[var(--color-secondary)]"
-                  : "bg-[var(--color-accent)]"
-              } text-white ${
-                computedCamDisabled
-                  ? "opacity-50 cursor-not-allowed"
-                  : "hover:opacity-90"
-              }`}
-              aria-pressed={camActive}
-              aria-disabled={computedCamDisabled}
-            >
-              <Camera />
-              {!camActive && (
-                <span className="absolute left-1/2 top-1/2 w-[22px] h-[3px] bg-white rotate-45 -translate-x-1/2 -translate-y-1/2 rounded" />
-              )}
-            </button>
+            {data?.host &&  (
+              <button
+                id="camera-btn"
+                onClick={safe(onToggleCamera, computedCamDisabled)}
+                disabled={computedCamDisabled}
+                title={computedCamDisabled ? "Join first to use camera" : ""}
+                className={`relative p-1 sm:p-2 md:p-3 rounded-md ${
+                  camActive
+                    ? "bg-[var(--color-secondary)]"
+                    : "bg-[var(--color-accent)]"
+                } text-white ${
+                  computedCamDisabled
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:opacity-90"
+                }`}
+                aria-pressed={camActive}
+                aria-disabled={computedCamDisabled}
+              >
+                <Camera />
+                {!camActive && (
+                  <span className="absolute left-1/2 top-1/2 w-[22px] h-[3px] bg-white rotate-45 -translate-x-1/2 -translate-y-1/2 rounded" />
+                )}
+              </button>
+            )}
 
             {/* Mic */}
             <button
