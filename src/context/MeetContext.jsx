@@ -512,8 +512,8 @@ export const MeetProvider = ({ children }) => {
       `lecture.${lectureId}.start.recording`,
       `recording.started`,
 
-      async (payload) => {
-        console.log(payload, "from start pusher");
+      async () => {
+        // console.log(payload, "from start pusher");
         setIsRecording(true);
         playSound("/src/assets/start.mp3");
       }
@@ -523,8 +523,8 @@ export const MeetProvider = ({ children }) => {
       `lecture.${lectureId}.start.recording`,
       `recording.ended`,
 
-      async (payload) => {
-        console.log(payload, "from end pusher");
+      async () => {
+        // console.log(payload, "from end pusher");
         setIsRecording(false);
         playSound("/src/assets/end.mp3");
       }

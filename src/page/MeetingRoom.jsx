@@ -162,7 +162,7 @@ export default function MeetingRoom() {
     } catch (err) {
       console.warn("record-end error:", err);
     }
-    console.log("Executing full leave process due to remote login...");
+    // console.log("Executing full leave process due to remote login...");
     await leaveRTM().catch(() => {});
     await leaveRoom();
 

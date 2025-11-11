@@ -22,7 +22,7 @@ export const initRTM = async (appId, uid, rtmToken ,onKicked, { name, host } = {
   rtmClient = AgoraRTM.createInstance(appId);
 
   rtmClient.on("ConnectionStateChanged", (newState, reason) => {
-    console.log("RTM Connection state changed:", newState, "reason:", reason);
+    // console.log("RTM Connection state changed:", newState, "reason:", reason);
     
     if (reason === "REMOTE_LOGIN" || reason === "LOGIN_ABORTED") {
       onKicked?.(); 
