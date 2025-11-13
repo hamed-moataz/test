@@ -75,6 +75,7 @@ export const MeetProvider = ({ children }) => {
       return null;
     }
   }, [t]);
+  console.log(payloadData , 'payload user')
 
   const userId = String(payloadData?.user_uuid || "");
   const lectureId = String(payloadData?.lecture_uuid || "");

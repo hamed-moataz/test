@@ -70,8 +70,6 @@ export default function MeetingRoom() {
   const localVideoRef = useRef(null);
   const screenVideoRef = useRef(null);
 
- 
-
   const updateMembers = useCallback(() => {
     const users = getRemoteUsers();
     setRemoteUsers([...users]);
@@ -279,6 +277,33 @@ export default function MeetingRoom() {
               <VideoGrid joined={joined} fullBleed={anyScreenActive}>
                 {anyScreenActive ? (
                   <div className="relative w-full h-full bg-black rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => {
+                        if (!document.fullscreenElement) {
+                          document.documentElement.requestFullscreen();
+                        } else {
+                          document.exitFullscreen();
+                        }
+                      }}
+                      className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 text-white backdrop-blur-md px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-all duration-300 shadow-lg  z-50"
+                      title="Toggle Full Screen"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M8 3H5a2 2 0 00-2 2v3m0 8v3a2 2 0 002 2h3m8-18h3a2 2 0 012 2v3m0 8v3a2 2 0 01-2 2h-3"
+                        />
+                      </svg>
+                      Full Screen
+                    </button>
                     {screenActive ? (
                       <div ref={screenVideoRef} className="absolute inset-0" />
                     ) : currentScreenSharer ? (
