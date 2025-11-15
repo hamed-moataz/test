@@ -75,7 +75,7 @@ export const MeetProvider = ({ children }) => {
       return null;
     }
   }, [t]);
-  console.log(payloadData , 'payload user')
+  console.log(payloadData , "payload")
 
   const userId = String(payloadData?.user_uuid || "");
   const lectureId = String(payloadData?.lecture_uuid || "");
@@ -150,7 +150,7 @@ export const MeetProvider = ({ children }) => {
 
   const muteUser = async (id) => {
     try {
-      const res = await fetch(`${baseUrl}/api/agora/mute/user/${id}`, {
+      const res = await fetch(`${baseUrl}api/agora/mute/user/${id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ payload: t }),
@@ -166,7 +166,7 @@ export const MeetProvider = ({ children }) => {
     try {
       setMicActive(false);
 
-      const res = await fetch(`${baseUrl}/api/agora/mute/all/users`, {
+      const res = await fetch(`${baseUrl}api/agora/mute/all/users`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ payload: t }),
@@ -180,7 +180,7 @@ export const MeetProvider = ({ children }) => {
 
   const kickedUser = async (id) => {
     try {
-      const res = await fetch(`${baseUrl}/api/agora/kick/user/${id}`, {
+      const res = await fetch(`${baseUrl}api/agora/kick/user/${id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ payload: t }),
@@ -194,7 +194,7 @@ export const MeetProvider = ({ children }) => {
 
   const endForAll = async () => {
     try {
-      const res = await fetch(`${baseUrl}/api/agora/end-for-all`, {
+      const res = await fetch(`${baseUrl}api/agora/end-for-all`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ payload: t }),
@@ -210,7 +210,7 @@ export const MeetProvider = ({ children }) => {
     setHasRaised(true);
     setRaisedHands((prev) => new Set(prev).add(userId));
     try {
-      const res = await fetch(`${baseUrl}/api/agora/raise/hand`, {
+      const res = await fetch(`${baseUrl}api/agora/raise/hand`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ payload: t }),
@@ -237,7 +237,7 @@ export const MeetProvider = ({ children }) => {
     });
 
     try {
-      const res = await fetch(`${baseUrl}/api/agora/low/hand/${userId}`, {
+      const res = await fetch(`${baseUrl}api/agora/low/hand/${userId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ payload: t }),
@@ -251,7 +251,7 @@ export const MeetProvider = ({ children }) => {
   };
   const closeStreamById = async (id) => {
     try {
-      const res = await fetch(`${baseUrl}/api/agora/start/stream/${id}`, {
+      const res = await fetch(`${baseUrl}api/agora/start/stream/${id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ payload: t }),
@@ -268,7 +268,7 @@ export const MeetProvider = ({ children }) => {
   const startRecord = async () => {
     try {
       setIsRecording(true);
-      const res = await fetch(`${baseUrl}/api/agora/start/recording`, {
+      const res = await fetch(`${baseUrl}api/agora/start/recording`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ payload: t }),
@@ -285,7 +285,7 @@ export const MeetProvider = ({ children }) => {
   const endRecord = async () => {
     try {
       setIsRecording(false);
-      const res = await fetch(`${baseUrl}/api/agora/end/recording`, {
+      const res = await fetch(`${baseUrl}api/agora/end/recording`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ payload: t }),
@@ -317,7 +317,7 @@ export const MeetProvider = ({ children }) => {
     });
 
     try {
-      const res = await fetch(`${baseUrl}/api/agora/low/hand/${id}`, {
+      const res = await fetch(`${baseUrl}api/agora/low/hand/${id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ payload: t }),
@@ -343,7 +343,7 @@ export const MeetProvider = ({ children }) => {
       }
 
       try {
-        const res = await fetch(`${baseUrl}/api/agora/verify`, {
+        const res = await fetch(`${baseUrl}api/agora/verify`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ payload: t }),

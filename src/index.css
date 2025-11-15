@@ -1,23 +1,22 @@
 @import "tailwindcss";
 
 @theme {
-     --color-primary:#1a1a1a;
-     --color-secondary:oklch(39.1% 0.09 240.876);
-     --color-accent:#718096;
+  --color-primary: #1a1a1a;
+  --color-secondary: oklch(39.1% 0.09 240.876);
+  --color-accent: #718096;
 }
 
 .speaking-glow {
-  box-shadow: 
-    0 0 0 4px #4CAF50, 
-    0 0 10px #4CAF50, 
-    0 0 20px #4CAF50;
-  transition: box-shadow 0.3s ease-in-out; 
+  box-shadow: 0 0 0 4px #4caf50, 0 0 10px #4caf50, 0 0 20px #4caf50;
+  transition: box-shadow 0.3s ease-in-out;
 }
 
 [id^="agora-video-player-track-video"] {
-  position: static !important; 
+  position: static !important;
   z-index: 1000 !important;
+  object-fit: contain !important;
 }
-[id^="video_track-video"]{
+[id^="video_track-video"] {
   height: 100% !important;
+  object-fit: contain !important;
 }

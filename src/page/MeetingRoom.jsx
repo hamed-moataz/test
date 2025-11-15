@@ -52,7 +52,7 @@ export default function MeetingRoom() {
 
   const [messages, setMessages] = useState([]);
   const [chatVisible, setChatVisible] = useState(true);
-  const [membersVisible, setMembersVisible] = useState(true);
+  const [membersVisible, setMembersVisible] = useState(false);
   const [speakingUsers, setSpeakingUsers] = useState({});
   const speakingPrevRef = useRef({});
   const upsertUser = useCallback((u) => {
@@ -87,7 +87,7 @@ export default function MeetingRoom() {
       setJoining(true);
 
       try {
-        const res = await fetch(`${baseUrl}/api/agora/record-join`, {
+        const res = await fetch(`${baseUrl}api/agora/record-join`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ payload: t }),
@@ -150,7 +150,7 @@ export default function MeetingRoom() {
 
   const handleLeave = useCallback(async () => {
     try {
-      const res = await fetch(`${baseUrl}/api/agora/record-end`, {
+      const res = await fetch(`${baseUrl}api/agora/record-end`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ payload: t }),
@@ -277,33 +277,6 @@ export default function MeetingRoom() {
               <VideoGrid joined={joined} fullBleed={anyScreenActive}>
                 {anyScreenActive ? (
                   <div className="relative w-full h-full bg-black rounded-lg overflow-hidden">
-                    <button
-                      onClick={() => {
-                        if (!document.fullscreenElement) {
-                          document.documentElement.requestFullscreen();
-                        } else {
-                          document.exitFullscreen();
-                        }
-                      }}
-                      className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 text-white backdrop-blur-md px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-all duration-300 shadow-lg  z-50"
-                      title="Toggle Full Screen"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M8 3H5a2 2 0 00-2 2v3m0 8v3a2 2 0 002 2h3m8-18h3a2 2 0 012 2v3m0 8v3a2 2 0 01-2 2h-3"
-                        />
-                      </svg>
-                      Full Screen
-                    </button>
                     {screenActive ? (
                       <div ref={screenVideoRef} className="absolute inset-0" />
                     ) : currentScreenSharer ? (
@@ -334,26 +307,34 @@ export default function MeetingRoom() {
                     )}
 
                     {sortedMembers.map((user) => {
+                      console.log(user);
                       const isSpeaking = !!speakingUsers[user.id];
                       const speakingClass = isSpeaking
                         ? "ring-4 ring-[var(--color-secondary)] animate-pulse"
                         : "";
-
                       return (
                         <div
                           key={user.id}
                           className="flex flex-wrap justify-center"
                         >
                           <div
-                            className={`w-[160px] h-[160px] bg-sky-500 rounded-full ${speakingClass}`}
+                            className={`w-[100px] h-[100px] bg-sky-500 rounded-full ${speakingClass} group cursor-pointer`}
                           >
                             <div
                               id={`player-${user.id}`}
                               className="w-full h-full flex justify-center items-center overflow-hidden px-2 text-center"
                             >
-                              <span className="text-white w-full mx-auto text-center">
-                                {user.name}
-                              </span>
+                              {!user.video && (
+                                <span className="text-white w-full mx-auto text-center transition-all duration-200 group-hover:text-sm">
+                                  <span className="group-hover:hidden text-4xl font-bold">
+                                    {user.name.charAt(0).toUpperCase()}
+                                  </span>
+
+                                  <span className="hidden group-hover:block text-base">
+                                    {user.name}
+                                  </span>
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>

@@ -38,6 +38,9 @@ export default function Controls({
 
   const isSomeoneElseSharing = sharingMember && !isCurrentUserSharing;
 
+  const isAdminLive = data?.mode === "live" && data?.host === true;
+  const isGuestLive = data?.mode === "live" && data?.host === false;
+
   const computedMicDisabled = useMemo(
     () => (typeof micDisabled === "boolean" ? micDisabled : !joined),
     [micDisabled, joined]
@@ -62,12 +65,11 @@ export default function Controls({
         {joined && (
           <>
             {/* Camera */}
-            {data?.host &&  (
+            {isAdminLive && (
               <button
                 id="camera-btn"
                 onClick={safe(onToggleCamera, computedCamDisabled)}
                 disabled={computedCamDisabled}
-                title={computedCamDisabled ? "Join first to use camera" : ""}
                 className={`relative p-1 sm:p-2 md:p-3 rounded-md ${
                   camActive
                     ? "bg-[var(--color-secondary)]"
@@ -77,8 +79,6 @@ export default function Controls({
                     ? "opacity-50 cursor-not-allowed"
                     : "hover:opacity-90"
                 }`}
-                aria-pressed={camActive}
-                aria-disabled={computedCamDisabled}
               >
                 <Camera />
                 {!camActive && (
@@ -88,6 +88,8 @@ export default function Controls({
             )}
 
             {/* Mic */}
+            {isAdminLive && (
+
             <button
               id="mic-btn"
               onClick={safe(handleToggleMic, computedMicDisabled)}
@@ -110,9 +112,10 @@ export default function Controls({
                 <span className="absolute left-1/2 top-1/2 w-[22px] h-[2px] bg-white rotate-45 -translate-x-1/2 -translate-y-1/2 rounded" />
               )}
             </button>
+            )}
 
             {/* Screen Share */}
-            {!isSomeoneElseSharing && (
+            {!isSomeoneElseSharing && isAdminLive && (
               <button
                 id="screen-btn"
                 onClick={safe(handleToggleScreen, computedScreenDisabled)}
